@@ -4,16 +4,15 @@ BOT = bot
 NCURSES = -lncurses
 C = gcc
 
-.PHONY: all jogoUI motor bot clean
 all: jogoUI motor bot
 
-jogoUI:
+jogoUI: ./${JOGOUI}/${JOGOUI}.c
 	${C} -o ./${JOGOUI}/${JOGOUI} ./${JOGOUI}/${JOGOUI}.c ${NCURSES}
 
-motor:
+motor: ./${MOTOR}/${MOTOR}.c 
 	${C} -o ./${MOTOR}/${MOTOR} ./${MOTOR}/${MOTOR}.c 
 
-bot:
+bot: ./${BOT}/${BOT}.c
 	${C} -o ./${BOT}/${BOT} ./${BOT}/${BOT}.c
 
 clean:
