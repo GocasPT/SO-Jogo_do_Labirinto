@@ -1,6 +1,7 @@
 #ifndef MOTOR_H
 #define MOTOR_H
 
+#include "../bot/bot.h"
 #include "../jogoUI/jogoUI.h"
 
 #define ROWS 16
@@ -14,8 +15,9 @@
 #define MAX_MOVE_BLOCK5 5
 
 typedef struct {
-    int x, y;
-} Rock;
+    char board[ROWS][COLLUMN];
+    int level;
+} Level;
 
 typedef struct {
     int x, y;
@@ -24,15 +26,18 @@ typedef struct {
 } MoveBlock;
 
 typedef struct {
-    char borad[ROWS][COLLUMN];
-    int level;
+    int x, y;
+    int time;
+} Rock;
+
+typedef struct {
+    Level level;
     int timerBegin;
     int timerGame, stepTimerGame;
     int nUserMin;
     int nUserOn, nBotOn, nRockOn, nMoveBlockOn;
     User userList[MAX_USER];
-    // int ou struct Bot? (criar uma struct Bot)
-    int botLIst[MAX_BOT];
+    Bot botList[MAX_BOT];
     Rock rockList[MAX_ROCK];
     MoveBlock moveBlockList[MAX_MOVE_BLOCK5];
 } Motor;
