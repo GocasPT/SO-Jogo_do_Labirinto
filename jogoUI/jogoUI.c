@@ -9,15 +9,17 @@
 
 #define TAG ">> "
 
+// TODO: Mudar para janelas em vez de coordenadas
 #define X 0
 #define Y_MAZE 3
 #define Y_NOTIFICATION Y_MAZE + ROWS + 3
 #define Y_INPUT Y_NOTIFICATION + 2
 
-// META 1
+//* PLACEHOLDER [META 1]
 void configLevel(Level* level) {
     level->level = 1;
 
+    // TODO [after makefile]: Mudar o caminho quando o excutavel mudar o local de execução
     FILE* file = fopen("map/level1.txt", "r");
 
     if (file == NULL) {
@@ -51,6 +53,7 @@ void clearInput() {
 }
 
 // Função Extra para escrever as mensagens das notificações mais bonito
+// TODO [after janelas]: Ver se ainda faz sentido ter isto
 void writeNotification(const char* format, ...) {
     va_list args;
     va_start(args, format);
@@ -65,6 +68,7 @@ void writeNotification(const char* format, ...) {
 
 void drawMaze(char board[ROWS][COLLUMN]) {
     for (int i = 0; i < ROWS; i++)
+        // TODO [after janelas]: Mudar para o modo de janelas
         mvprintw(Y_MAZE + i, X, "%s", board[i]);
 }
 
@@ -73,7 +77,8 @@ int validateCommand(char* input) {
     char argv[2][MAX];
     int argc;
 
-    // TODO: [DUVIDA] argv[1] recebe lixo
+    // TODO [DUVIDA]: argv[1] recebe lixo
+    // TODO [after janelas]: Mudar para o modo de janelas/ver se ainda faz sentido ter isto
     if (argc = sscanf(input, "%s %s %100c", cmd, argv[0], argv[1])) {
         if (!strcmp(cmd, "help"))
             writeNotification("Comando help: players, msg e exit\n");
@@ -116,8 +121,9 @@ int main(int argc, char* argv[]) {
     //! input → comando do utilizador
     //! key → tecla de movimento do utilizador
 
-    // [META 1] _PLACEHOLDER_
+    //* PLACEHOLDER [META 1]
     configLevel(&level);
+    initscr();
 
     // TODO: config do terminal/janelas
     /*
@@ -151,6 +157,7 @@ int main(int argc, char* argv[]) {
     keypad(console, TRUE);
     */
 
+    // TODO [after janelas]: Mudar para o modo de janelas
     while (1) {
         drawMaze(level.board);
         mvprintw(Y_INPUT, X, TAG);

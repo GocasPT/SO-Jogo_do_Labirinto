@@ -6,6 +6,7 @@ C = gcc
 
 all: jogoUI motor bot
 
+#TODO: Por os executaveis na pasta root do projeto
 jogoUI: ./${JOGOUI}/${JOGOUI}.c
 	${C} -o ./${JOGOUI}/${JOGOUI} ./${JOGOUI}/${JOGOUI}.c ${NCURSES}
 
