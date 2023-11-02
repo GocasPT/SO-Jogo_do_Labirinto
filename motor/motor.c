@@ -21,7 +21,7 @@ void showInfo(Motor motor, char type) {
         case 'b':
             printf("Lista de bots:\n");
             for (int i = 0; i < motor.nBotOn; i++)
-                printf("Bot: %d [PID - %d]\n", i, motor.botList[i].PID);
+                printf("Bot: %d [PID - %d]\n", i + 1, motor.botList[i].PID);
             break;
 
         case 'm':
@@ -47,6 +47,7 @@ void showInfo(Motor motor, char type) {
     }
 }
 
+// TODO: corrigir o execBot (executar mais que um bot e receber as infos)
 int execBot(Motor* motor) {
     printf("Executando bot\n\n");
 
@@ -70,29 +71,52 @@ int execBot(Motor* motor) {
         close(fd[0]);
         close(fd[1]);
 
-        if (execl("./bot/bot", "./bot/bot", NULL)) {
+        // TODO: variar os valores de config do bot
+        char interval[3], duration[3];
+        sprintf(interval, "%d", 30 - ((motor->nBotOn - 1) * 5));
+        sprintf(duration, "%d", 10 - ((motor->nBotOn - 1) * 5));
+
+        if (execl("./bot/bot", "./bot/bot", interval, duration, NULL) == -1) {
             printf("%s [FILHO] Erro ao executar o bot\n", TAG_MOTOR);
-            return 1;
+            return -1;
         }
+
+        motor->nBotOn--;
     }
 
     // Pai
     else {
-        // TODO: Meta 2 - loop de leitura do pipe
-        close(fd[1]);
-        char buffer[MAX];
+        // Se for o primeiro bot a ser executado, executa o segundo
+        // if (motor->nBotOn < motor->level.level + 1)
 
-        showInfo(*motor, 'b');
+        // PLACE_HOLDER
+        if (motor->nBotOn < 1)
+            execBot(motor);
 
-        wait(&pid);
+        // Se todos os bots tiveram ativos, é que começa a ler o pipe
+        else {
+            // TODO: Meta 2 - loop de leitura do pipe
+            close(fd[1]);
+            char buffer[10];
 
-        if (read(fd[0], buffer, sizeof(buffer)) == -1) {
-            printf("\n%s [PAI] Erro ao ler o pipe\n", TAG_MOTOR);
-            return 1;
+            showInfo(*motor, 'b');
+
+            while (1) {
+                if (read(fd[0], buffer, sizeof(buffer)) == -1) {
+                    printf("\n%s Erro ao ler o pipe\n", TAG_MOTOR);
+                    return 1;
+                }
+
+                buffer[strlen(buffer) - 1] = '\0';
+
+                int x, y, duration;
+                sscanf(buffer, "%d %d %d", &x, &y, &duration);
+
+                printf("%s RECEBI: %d %d %d\n", TAG_MOTOR, x, y, duration);
+            }
+
+            motor->nBotOn--;
         }
-
-        printf("\n%s [PAI] - Recebi:\n%s\n", TAG_MOTOR, buffer);
-        motor->nBotOn--;
     }
 
     return 0;
@@ -204,8 +228,10 @@ int validateCommand(char* input, Motor* motor) {
         // [META 1]
         else if (!strcmp(cmd, "test_bot")) {
             printf("%s Comando test_bot\n", TAG_MOTOR);
-            if (execBot(motor) == -1)
+            if (execBot(motor) == -1) {
                 printf("%s Erro ao executar o bot\n", TAG_MOTOR);
+                return -1;
+            }
         }
 
         else

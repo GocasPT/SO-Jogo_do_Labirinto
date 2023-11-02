@@ -104,20 +104,52 @@ int validateCommand(char* input) {
 int main(int argc, char* argv[]) {
     printf("Programa: jogoUI\n");
 
+    // Verifica se o nome do jogador foi passado
     if (argc != 2) {
         printf("Falta o teu nome\n");
         return -1;
     }
 
-    char input[MAX];
-    Level level;
+    Level level;      // Estrutura que guarda o nivel
+    char input[MAX];  // String que guarda o input do utilizador
+    int key;          // Variavel que guarda a tecla de movimento do utilizador
+    //! input → comando do utilizador
+    //! key → tecla de movimento do utilizador
 
-    // META 1
+    // [META 1] _PLACEHOLDER_
     configLevel(&level);
 
+    // TODO: config do terminal/janelas
+    /*
+    // Variaveis para configurar a UI
+    WINDOW* maze;
+    WINDOW* info;
+    WINDOW* notification;
+    WINDOW* console;
+
+    // Configuração do terminal
     initscr();
-    printw("Hello World !!!\n");
-    printw("User: %s\n", argv[1]);
+    start_color();
+    clear();
+    noecho();
+    cbreak();
+
+    // Configuração das cores
+    init_pair(1, COLOR_WHITE, COLOR_BLACK); // COLOR_PAIR(1) = WHITE ON BLACK
+    init_pair(2, COLOR_BLACK, COLOR_WHITE); // COLOR_PAIR(2) = BLACK ON WHITE
+
+    // Configuração das janelas
+    maze = newwin(ROWS, COLLUMN, Y_MAZE, X);
+    info = newwin(ROWS, COLLUMN, Y_MAZE, X + COLLUMN + 1);
+    notification = newwin(2, COLLUMN, Y_NOTIFICATION, X);
+    console = newwin(1, COLLUMN, Y_INPUT, X);
+
+    // Configuração da janela 'maze'
+    wrefresh(maze);
+
+    // Configuração da janela 'consola'
+    keypad(console, TRUE);
+    */
 
     while (1) {
         drawMaze(level.board);

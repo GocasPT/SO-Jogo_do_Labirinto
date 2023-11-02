@@ -1,25 +1,42 @@
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 
-int main() {
-    int x, y, time;
+#define NCOL 40
+#define NLIN 16
 
-    // Seed the random number generator with the current time
-    // srand(time(NULL));
+char RUNNING = 1;
 
-    // Generate random numbers in the specified ranges
-    x = rand() % 40;  // Generates a random number between 0 and 39
-    y = rand() % 16;  // Generates a random number between 0 and 15
+void termina(int sig, siginfo_t *info, void *ucontext) {
+    RUNNING = 0;
+}
 
-    // time has no limit, so it can be set to any value
-    time = 123456789;  // Example value
+int main(int argc, char *argv[]) {
+    int x, y, interval, duration;
+    struct sigaction sa;
 
-    // Print the generated numbers
-    printf("x = %d\n", x);
-    printf("y = %d\n", y);
-    printf("time = %d\n", time);
-
+    if (argc != 3) {
+        fprintf(stderr, "[ERROR] Number of command line args!\n       ./bot <interval> <duration>\n");
+        return 1;
+    }
+    if (sscanf(argv[1], "%d", &interval) != 1 ||
+        sscanf(argv[2], "%d", &duration) != 1) {
+        fprintf(stderr, "[ERROR] All args must be integers!\n");
+        return 2;
+    }
+    srand(time(NULL));
+    sa.sa_flags = SA_SIGINFO;
+    sa.sa_sigaction = termina;
+    sigaction(SIGINT, &sa, NULL);
+    while (RUNNING) {
+        sleep(interval);
+        x = rand() % NCOL;
+        y = rand() % NLIN;
+        printf("%d %d %d\n", x, y, duration);
+        fflush(stdout);
+    }
     return 0;
 }
