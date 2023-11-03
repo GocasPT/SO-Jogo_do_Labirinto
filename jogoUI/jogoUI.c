@@ -3,28 +3,47 @@
 #include <ncurses.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "../motor/motor.h"
 
 #define TAG ">> "
 
-// TODO: Mudar para janelas em vez de coordenadas
-#define X 0
-#define Y_MAZE 3
-#define Y_NOTIFICATION Y_MAZE + ROWS + 3
-#define Y_INPUT Y_NOTIFICATION + 2
+#define W_MAZE COLLUMN + 2
+#define H_MAZE ROWS + 2
+#define W_INFO 55 + 2
+#define H_INFO 10 + 2
+#define W_NOTIFICATION W_INFO
+#define H_NOTIFICATION 5 + 2
+#define W_INPUT W_MAZE
+#define H_INPUT 1 + 2
+
+#define X_MAZE 1
+#define Y_MAZE 1
+#define X_INFO X_MAZE + COLLUMN + 2
+#define Y_INFO Y_MAZE
+#define X_NOTIFICATION X_INFO
+#define Y_NOTIFICATION Y_INFO + H_INFO
+#define X_INPUT X_MAZE
+#define Y_INPUT Y_MAZE + ROWS + 2
+
+typedef struct {
+    WINDOW* maze;
+    WINDOW* info;
+    WINDOW* notification;
+    WINDOW* console;
+} UI;
 
 //* PLACEHOLDER [META 1]
 void configLevel(Level* level) {
     level->level = 1;
 
-    // TODO [after makefile]: Mudar o caminho quando o excutavel mudar o local de execução
     FILE* file = fopen("map/level1.txt", "r");
 
     if (file == NULL) {
         printf("Erro ao abrir o arquivo\n");
-        return;
+        exit(1);
     }
 
     char endLine[2];  // Para ler o \n do final da linha
@@ -33,79 +52,24 @@ void configLevel(Level* level) {
         // Lê uma linha do arquivo e coloca na board
         if (fgets(level->board[i], COLLUMN, file) == NULL) {
             printf("Erro ao ler o arquivo\n");
-            return;
+            exit(1);
         }
 
         // Lê o \n do final da linha e descarta
         if (fgets(endLine, 2, file) == NULL) {
             printf("Erro ao ler o arquivo\n");
-            return;
+            exit(1);
         }
     }
 
     fclose(file);
 }
+//* PLACEHOLDER [META 1]
 
-// TODO: check ultimate
-void clearInput() {
-    move(Y_INPUT, 0);
-    clrtoeol();
-}
+void configUI(UI* ui);
+void drawMaze(UI* ui, char board[ROWS][COLLUMN]);
+int isCommandValid(UI* ui, char* input);
 
-// Função Extra para escrever as mensagens das notificações mais bonito
-// TODO [after janelas]: Ver se ainda faz sentido ter isto
-void writeNotification(const char* format, ...) {
-    va_list args;
-    va_start(args, format);
-
-    char buffer[MAX];
-    vsnprintf(buffer, sizeof(buffer), format, args);
-
-    mvprintw(Y_NOTIFICATION, X, "%s", buffer);
-
-    va_end(args);
-}
-
-void drawMaze(char board[ROWS][COLLUMN]) {
-    for (int i = 0; i < ROWS; i++)
-        // TODO [after janelas]: Mudar para o modo de janelas
-        mvprintw(Y_MAZE + i, X, "%s", board[i]);
-}
-
-int validateCommand(char* input) {
-    char cmd[MAX];
-    char argv[2][MAX];
-    int argc;
-
-    // TODO [DUVIDA]: argv[1] recebe lixo
-    // TODO [after janelas]: Mudar para o modo de janelas/ver se ainda faz sentido ter isto
-    if (argc = sscanf(input, "%s %s %100c", cmd, argv[0], argv[1])) {
-        if (!strcmp(cmd, "help"))
-            writeNotification("Comando help: players, msg e exit\n");
-
-        else if (!strcmp(cmd, "players"))
-            writeNotification("Comando players\n");
-
-        else if (!strcmp(cmd, "msg")) {
-            if (argc < 3)
-                writeNotification("Comando de msg invalido - Falta argumentos\n");
-            else
-                writeNotification("Comando msg Destinatario: %s Mensagem: %s\n", argv[0], argv[1]);
-        }
-
-        else if (!strcmp(cmd, "exit")) {
-            writeNotification("Comando exit\n");
-            return 1;
-        }
-
-        else
-            writeNotification("Comnado invalido\n");
-    }
-
-    return 0;
-}
-
-// TODO: configurar as janelas (maze, info, notificação e input)
 int main(int argc, char* argv[]) {
     printf("Programa: jogoUI\n");
 
@@ -116,61 +80,132 @@ int main(int argc, char* argv[]) {
     }
 
     Level level;      // Estrutura que guarda o nivel
+    UI ui;            // Estrutura que guarda as janelas
     char input[MAX];  // String que guarda o input do utilizador
-    int key;          // Variavel que guarda a tecla de movimento do utilizador
-    //! input → comando do utilizador
-    //! key → tecla de movimento do utilizador
+    int key, exit;    // Variavel que guarda a tecla de movimento do utilizador
 
     //* PLACEHOLDER [META 1]
     configLevel(&level);
+    //* PLACEHOLDER [META 1]
+
     initscr();
+    configUI(&ui);
 
-    // TODO: config do terminal/janelas
-    /*
-    // Variaveis para configurar a UI
-    WINDOW* maze;
-    WINDOW* info;
-    WINDOW* notification;
-    WINDOW* console;
+    //* PLACEHOLDER
+    mvwprintw(ui.info, 1, 1, "Jogador: %s", argv[1]);
+    wrefresh(ui.info);
 
-    // Configuração do terminal
-    initscr();
-    start_color();
-    clear();
-    noecho();
-    cbreak();
+    wprintw(ui.notification, "Jogo do Labirinto - SO\n");
+    wrefresh(ui.notification);
+    //* PLACEHOLDER
 
-    // Configuração das cores
-    init_pair(1, COLOR_WHITE, COLOR_BLACK); // COLOR_PAIR(1) = WHITE ON BLACK
-    init_pair(2, COLOR_BLACK, COLOR_WHITE); // COLOR_PAIR(2) = BLACK ON WHITE
+    exit = 0;
+    while (exit != 1) {
+        drawMaze(&ui, level.board);
 
-    // Configuração das janelas
-    maze = newwin(ROWS, COLLUMN, Y_MAZE, X);
-    info = newwin(ROWS, COLLUMN, Y_MAZE, X + COLLUMN + 1);
-    notification = newwin(2, COLLUMN, Y_NOTIFICATION, X);
-    console = newwin(1, COLLUMN, Y_INPUT, X);
+        // TODO [duvida]: não mostrar as tecla na janela
+        key = wgetch(ui.console);
+        switch (key) {
+            case KEY_UP:
+                wprintw(ui.notification, "Cima\n");
+                break;
+            case KEY_DOWN:
+                wprintw(ui.notification, "Baixo\n");
+                break;
+            case KEY_LEFT:
+                wprintw(ui.notification, "Esquerda\n");
+                break;
+            case KEY_RIGHT:
+                wprintw(ui.notification, "Direita\n");
+                break;
+            case ' ':
+                echo();
+                nocbreak();
+                curs_set(1);
 
-    // Configuração da janela 'maze'
-    wrefresh(maze);
+                wrefresh(ui.console);
 
-    // Configuração da janela 'consola'
-    keypad(console, TRUE);
-    */
+                mvwprintw(ui.console, 1, 1, TAG);
+                wscanw(ui.console, " %100[^\n]", input);
 
-    // TODO [after janelas]: Mudar para o modo de janelas
-    while (1) {
-        drawMaze(level.board);
-        mvprintw(Y_INPUT, X, TAG);
-        mvgetstr(Y_INPUT, X + strlen(TAG), input);
+                if (isCommandValid(&ui, input) == 1)
+                    exit = 1;
 
-        if (validateCommand(input))
-            break;
-
-        refresh();
-        clearInput();
+                wmove(ui.console, 1, 1);
+                wclrtoeol(ui.console);
+                noecho();
+                cbreak();
+                curs_set(0);
+                break;
+        }
+        wrefresh(ui.notification);
     }
 
+    wgetch(ui.console);
     endwin();
+    return 0;
+}
 
+void configUI(UI* ui) {
+    ui->maze = newwin(H_MAZE, W_MAZE, Y_MAZE, X_MAZE);
+    ui->info = newwin(H_INFO, W_INFO, Y_INFO, X_INFO);
+    ui->notification = newwin(H_NOTIFICATION, W_NOTIFICATION, Y_NOTIFICATION, X_NOTIFICATION);
+    ui->console = newwin(H_INPUT, W_INPUT, Y_INPUT, X_INPUT);
+
+    box(ui->maze, 0, 0);
+    box(ui->info, 0, 0);
+
+    scrollok(ui->notification, TRUE);
+
+    noecho();
+    cbreak();
+    curs_set(0);
+
+    wrefresh(ui->maze);
+    wrefresh(ui->info);
+    wrefresh(ui->notification);
+    wrefresh(ui->console);
+}
+
+void drawMaze(UI* ui, char board[ROWS][COLLUMN]) {
+    for (int i = 0; i < ROWS; i++)
+        mvwprintw(ui->maze, i + 1, 1, "%s", board[i]);
+
+    wrefresh(ui->maze);
+}
+
+int isCommandValid(UI* ui, char* input) {
+    char cmd[MAX];
+    char argv[2][MAX];
+    int argc;
+
+    // TODO [DUVIDA]: argv[1] recebe lixo
+    argc = sscanf(input, "%s %s %100c", cmd, argv[0], argv[1]);
+
+    if (argc != 0) {
+        if (!strcmp(cmd, "help"))
+            wprintw(ui->notification, "Comando help: players, msg e exit\n");
+
+        else if (!strcmp(cmd, "players"))
+            wprintw(ui->notification, "Comando players\n");
+
+        else if (!strcmp(cmd, "msg")) {
+            if (argc < 3)
+                wprintw(ui->notification, "Comando de msg invalido - Falta argumentos\n");
+            else
+                wprintw(ui->notification, "Comando msg\nDestinatario: %s\nMensagem: %s\n", argv[0], argv[1]);
+        }
+
+        else if (!strcmp(cmd, "exit")) {
+            wprintw(ui->notification, "Comando exit\nPreciona 'Enter' para sair");
+            wrefresh(ui->notification);
+            return 1;
+        }
+
+        else
+            wprintw(ui->notification, "Comnado invalido\n");
+    }
+
+    wrefresh(ui->notification);
     return 0;
 }
