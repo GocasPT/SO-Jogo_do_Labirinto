@@ -190,8 +190,10 @@ int validateCommand(char* input, Motor* motor) {
     char argv[1][MAX];
     int argc;
 
+    argc = sscanf(input, "%s %s", cmd, argv[0]);
+
     // TODO [DUVIDA]: argv[1] recebe lixo
-    if (argc = sscanf(input, "%s %s", cmd, argv[0])) {
+    if (argc != 0) {
         if (!strcmp(cmd, "help"))
             printf("%s Comando helps:\n- users\n- kick\n- bots\n- bmov\n- rbm\n- begin\n- end\n- test_bot\n", TAG_MOTOR);
 

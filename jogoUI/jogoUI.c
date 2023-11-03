@@ -68,7 +68,7 @@ void configLevel(Level* level) {
 
 void configUI(UI* ui);
 void drawMaze(UI* ui, char board[ROWS][COLLUMN]);
-int isCommandValid(UI* ui, char* input);
+int validateCommand(UI* ui, char* input);
 
 int main(int argc, char* argv[]) {
     printf("Programa: jogoUI\n");
@@ -104,7 +104,7 @@ int main(int argc, char* argv[]) {
         drawMaze(&ui, level.board);
 
         // TODO [duvida]: não mostrar as tecla na janela
-        key = wgetch(ui.console);
+        key = wgetch(ui.maze);
         switch (key) {
             case KEY_UP:
                 wprintw(ui.notification, "Cima\n");
@@ -123,16 +123,16 @@ int main(int argc, char* argv[]) {
                 nocbreak();
                 curs_set(1);
 
-                wrefresh(ui.console);
-
                 mvwprintw(ui.console, 1, 1, TAG);
+                wrefresh(ui.console);
                 wscanw(ui.console, " %100[^\n]", input);
 
-                if (isCommandValid(&ui, input) == 1)
+                if (validateCommand(&ui, input) == 1)
                     exit = 1;
 
                 wmove(ui.console, 1, 1);
                 wclrtoeol(ui.console);
+                wrefresh(ui.console);
                 noecho();
                 cbreak();
                 curs_set(0);
@@ -156,6 +156,7 @@ void configUI(UI* ui) {
     box(ui->info, 0, 0);
 
     scrollok(ui->notification, TRUE);
+    keypad(ui->maze, TRUE);
 
     noecho();
     cbreak();
@@ -174,7 +175,7 @@ void drawMaze(UI* ui, char board[ROWS][COLLUMN]) {
     wrefresh(ui->maze);
 }
 
-int isCommandValid(UI* ui, char* input) {
+int validateCommand(UI* ui, char* input) {
     char cmd[MAX];
     char argv[2][MAX];
     int argc;
