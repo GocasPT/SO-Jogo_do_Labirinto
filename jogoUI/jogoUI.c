@@ -174,8 +174,7 @@ int validateCommand(UI* ui, char* input) {
     char argv[2][MAX];  // Vetor de strings que guarda os argumentos do comando
     int argc;           // Numero de argumentos do comando
 
-    // TODO [DUVIDA]: argv[1] recebe lixo
-    argc = sscanf(input, "%s %s %90c", cmd, argv[0], argv[1]);
+    argc = sscanf(input, "%s %s %90[^\n]", cmd, argv[0], argv[1]);
 
     // TODO [DUVIDA]: os comando que não tem argumentos precisam de um if para verificar se argc == 0 (?)
     if (argc != 0) {

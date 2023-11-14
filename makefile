@@ -2,12 +2,12 @@ JOGOUI = jogoUI
 MOTOR = motor
 BOT = bot
 NCURSES = -lncursesw
+THREAD = -pthread
 CFLAGS = -Wall -Werror -Wextra
 C = gcc
 
 all: jogoUI motor bot
 
-#TODO [DUVIDA]: Por os executaveis na pasta root do projeto
 jogoUI: ./${JOGOUI}/${JOGOUI}.c
 	${C} -o ./${JOGOUI}/${JOGOUI} -s ./${JOGOUI}/${JOGOUI}.c ${NCURSES} ${CFLAGS}
 

@@ -1,5 +1,6 @@
 #include "motor.h"
 
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,6 +16,7 @@ int readLevelMap(char* path, char board[ROWS][COLLUMN]);
 int validateCommand(char* input, Motor* motor);
 void showInfo(Motor motor, char type);
 int execBot(Motor* motor);
+void singalHandler(int signum);
 
 int main() {
     Motor servidor;   // Estrutura que guarda o servidor
@@ -53,13 +55,30 @@ int configServer(Motor* motor) {
     if (readLevelMap("map/level1.txt", motor->level.board) == -1)
         return -1;
 
-    // TODO [META 2]: Por os valores corretos (variáveis de ambiente)
+    // TODO [META 2]: Sinal para sair do programa (mantar a estrutura do servidor)
+    struct sigaction signal;
+    signal.sa_sigaction = singalHandler;
+    signal.sa_flags = SA_SIGINFO | SA_RESTART;
+    sigaction(SIGINT, &signal, motor);
+
+    // Variáveis de ambiente
+    char* timerBegin_env = getenv("INSCRICAO");
+    char* timerGame_env = getenv("DURACAO");
+    char* stepTimerGame_env = getenv("DECREMENTO");
+    char* nUserMin_env = getenv("NPLAYERS");
+
+    // Verifica se as variáveis de ambiente foram lidas corretamente
+    if (timerBegin_env == NULL || timerGame_env == NULL || stepTimerGame_env == NULL || nUserMin_env == NULL) {
+        printf("%s Erro ao ler as variáveis de ambiente\n", TAG_MOTOR);
+        return -1;
+    }
+
     // Inicializa o servidor com os valores padrões
     motor->level.level = 1;
-    motor->timerBegin = 0;     // ← INSCRICAO
-    motor->timerGame = 0;      // ← DURACAO
-    motor->stepTimerGame = 0;  // ← DECREMENTO
-    motor->nUserMin = 1;       // ← NPLAYERS
+    motor->timerBegin = atoi(timerBegin_env);        // ← INSCRICAO
+    motor->timerGame = atoi(timerGame_env);          // ← DURACAO
+    motor->stepTimerGame = atoi(stepTimerGame_env);  // ← DECREMENTO
+    motor->nUserMin = atoi(nUserMin_env);            // ← NPLAYERS
     motor->nUserOn = 0;
     motor->nBotOn = 0;
     motor->nRockOn = 0;
@@ -87,7 +106,6 @@ int configServer(Motor* motor) {
  * \param board Tabuleiro
  */
 int readLevelMap(char* path, char board[ROWS][COLLUMN]) {
-    // TODO [after makefile]: Mudar o caminho quando o excutavel mudar o local de execução
     // Abre o ficheiro
     FILE* file = fopen(path, "r");
 
@@ -138,7 +156,6 @@ int validateCommand(char* input, Motor* motor) {
 
     argc = sscanf(input, "%s %s", cmd, argv[0]);
 
-    // TODO [DUVIDA]: argv[1] recebe lixo
     if (argc != 0) {
         if (!strcmp(cmd, "help"))
             printf("%s Comando helps:\n- users\n- kick\n- bots\n- bmov\n- rbm\n- begin\n- end\n- test_bot\n", TAG_MOTOR);
@@ -253,6 +270,7 @@ void showInfo(Motor motor, char type) {
 int execBot(Motor* motor) {
     printf("Executando bot\n\n");
 
+    // TODO: 1 pipe → array de pipes (dinamico?)
     int pid;    // PID do processo filho
     int fd[2];  // Pipe
 
@@ -274,7 +292,8 @@ int execBot(Motor* motor) {
      * Nível 2 → 3 bots
      * Nível 3 → 4 bots
      */
-    for (int i = 0; i < motor->level.level + 1; i++) {
+    // for (int i = 0; i < motor->level.level +1; i++) {
+    for (int i = 0; i < 1; i++) {
         motor->botList[motor->nBotOn] = fork();  // Cria o processo filho
         pid = motor->botList[motor->nBotOn];     // Guarda o PID do processo filho
 
@@ -365,3 +384,14 @@ int execBot(Motor* motor) {
 
     return 0;
 }
+
+// TODO [META 2]: Receber a sinal para sair do programa e a estrutura do servidor
+/*
+void singalHandler(int signum, siginfo_t* info, void* ptr) {
+    Motor* motor = (Motor*)ptr;
+
+    for (int i = 0; i < motor->nBotOn; i++)
+        // kill(motor->botList[i], SIGINT);
+        sigqueue(motor->botList[i], SIGINT, (const union sigval){.sival_int = 0});
+}
+*/
