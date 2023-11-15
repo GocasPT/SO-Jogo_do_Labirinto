@@ -10,6 +10,7 @@
 
 #define TAG_MOTOR "<Motor>"
 #define TAG_CMD ">>"
+
 // Variável global (para o sinal)
 SignalContext contexto;  // Estrutura que guarda o contexto do sinal
 
@@ -398,19 +399,25 @@ int execBot(Motor* motor) {
     return 0;
 }
 
+/**
+ * Handler do sinal
+ * \param signum Número do sinal
+ */
 void singalHandler(int signum) {
     printf("\n%s Recebi o sinal %d [Sinal para sair]\nComecar a terminar o motor e os seus mecanismos\n", TAG_MOTOR, signum);
 
+    //  Ativa a flag para sair dos loops
     printf("Parar de ler o pipe dos bots\n");
     contexto.flag = 1;
 
+    // Termina os bots
     printf("Matar bots\n");
-
     union sigval val;
     for (int i = 0; i < *contexto.nBotOn; i++) {
         printf("Bot: %d [PID - %d]\n", i + 1, contexto.botList[i]);
         sigqueue(contexto.botList[i], SIGINT, val);
     }
 
+    // Sai da função e avisa caso nao tenha acabado introduzir o comando ou ENTER
     printf("%s Caso nao tenha saido, precione ENTER para enviar o comando que esta em espera\n", TAG_MOTOR);
 }

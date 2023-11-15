@@ -54,9 +54,9 @@ typedef struct {
 
 // Estrutura de dados do contexto do sinal
 typedef struct {
-    int flag;
-    int *botList;
-    int *nBotOn;
+    int flag;      // Flag de saida - 0: continua; 1: termina
+    int *botList;  // Ponteiro para a lista de bots
+    int *nBotOn;   // Ponteiro para o número de bots
 } SignalContext;
 
 #endif  // MOTOR_H
