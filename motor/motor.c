@@ -10,6 +10,8 @@
 
 #define TAG_MOTOR "<Motor>"
 #define TAG_CMD ">>"
+// Variável global (para o sinal)
+SignalContext contexto;  // Estrutura que guarda o contexto do sinal
 
 int configServer(Motor* motor);
 int readLevelMap(char* path, char board[ROWS][COLLUMN]);
@@ -21,15 +23,21 @@ void singalHandler(int signum);
 int main() {
     Motor servidor;   // Estrutura que guarda o servidor
     char input[MAX];  // String que guarda o input do utilizador
+    char* inputResult;
 
     //  Configura o servidor
     if (configServer(&servidor) == -1)
         return -1;
 
-    while (1) {
+    while (!contexto.flag) {
         // Imprime o prompt e lê o input do utilizador
         printf("%s ", TAG_CMD);
-        fgets(input, sizeof(input), stdin);
+        inputResult = fgets(input, sizeof(input), stdin);
+
+        if (inputResult == NULL) {
+            printf("%s Erro ao ler o input\n", TAG_MOTOR);
+            break;
+        }
 
         /**
          * Valida o comando
@@ -38,6 +46,8 @@ int main() {
         if (validateCommand(input, &servidor) == -1)
             break;
     }
+
+    printf("%s A sair do programa...\n", TAG_MOTOR);
 
     return 0;
 }
@@ -55,11 +65,10 @@ int configServer(Motor* motor) {
     if (readLevelMap("map/level1.txt", motor->level.board) == -1)
         return -1;
 
-    // TODO [META 2]: Sinal para sair do programa (mantar a estrutura do servidor)
     struct sigaction signal;
-    signal.sa_sigaction = singalHandler;
+    signal.sa_handler = singalHandler;
     signal.sa_flags = SA_SIGINFO | SA_RESTART;
-    sigaction(SIGINT, &signal, motor);
+    sigaction(SIGINT, &signal, NULL);
 
     // Variáveis de ambiente
     char* timerBegin_env = getenv("INSCRICAO");
@@ -83,6 +92,11 @@ int configServer(Motor* motor) {
     motor->nBotOn = 0;
     motor->nRockOn = 0;
     motor->nMoveBlockOn = 0;
+
+    // Configuração dos ponteiro do contexto do sinal
+    contexto.flag = 0;
+    contexto.botList = motor->botList;
+    contexto.nBotOn = &motor->nBotOn;
 
     // Imprime a configuração do servidor
     printf("%s Configuração do servidor:\n", TAG_MOTOR);
@@ -360,9 +374,8 @@ int execBot(Motor* motor) {
     showInfo(*motor, 'b');
     printf("%s A ler o pipe:\n", TAG_MOTOR);
 
-    // TODO [?]: Uma para sair do loop (sinal ou algo do género)
     // Loop infinito para ler o pipe
-    while (1) {
+    while (!contexto.flag) {
         /**
          * Lê o pipe
          * Se retornar -1, houve um erro ao ler o pipe
@@ -385,13 +398,19 @@ int execBot(Motor* motor) {
     return 0;
 }
 
-// TODO [META 2]: Receber a sinal para sair do programa e a estrutura do servidor
-/*
-void singalHandler(int signum, siginfo_t* info, void* ptr) {
-    Motor* motor = (Motor*)ptr;
+void singalHandler(int signum) {
+    printf("\n%s Recebi o sinal %d [Sinal para sair]\nComecar a terminar o motor e os seus mecanismos\n", TAG_MOTOR, signum);
 
-    for (int i = 0; i < motor->nBotOn; i++)
-        // kill(motor->botList[i], SIGINT);
-        sigqueue(motor->botList[i], SIGINT, (const union sigval){.sival_int = 0});
+    printf("Parar de ler o pipe dos bots\n");
+    contexto.flag = 1;
+
+    printf("Matar bots\n");
+
+    union sigval val;
+    for (int i = 0; i < *contexto.nBotOn; i++) {
+        printf("Bot: %d [PID - %d]\n", i + 1, contexto.botList[i]);
+        sigqueue(contexto.botList[i], SIGINT, val);
+    }
+
+    printf("%s Caso nao tenha saido, precione ENTER para enviar o comando que esta em espera\n", TAG_MOTOR);
 }
-*/

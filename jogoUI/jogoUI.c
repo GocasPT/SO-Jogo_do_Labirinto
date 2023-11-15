@@ -176,7 +176,6 @@ int validateCommand(UI* ui, char* input) {
 
     argc = sscanf(input, "%s %s %90[^\n]", cmd, argv[0], argv[1]);
 
-    // TODO [DUVIDA]: os comando que não tem argumentos precisam de um if para verificar se argc == 0 (?)
     if (argc != 0) {
         if (!strcmp(cmd, "help"))
             wprintw(ui->notification, "Comando help:\n- players\n- msg <username> <mensagem>\n- exit\n");

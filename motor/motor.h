@@ -52,4 +52,11 @@ typedef struct {
     MoveBlock moveBlockList[MAX_MOVE_BLOCK5];    // Lista de paredes em movimento
 } Motor;
 
+// Estrutura de dados do contexto do sinal
+typedef struct {
+    int flag;
+    int *botList;
+    int *nBotOn;
+} SignalContext;
+
 #endif  // MOTOR_H
