@@ -1,11 +1,7 @@
 #ifndef MOTOR_H
 #define MOTOR_H
 
-#include "../jogoUI/jogoUI.h"
-
-#define ROWS 16         // 16 linhas
-#define COLLUMN 40 + 1  // 40 colunas + 1 para o \0
-#define MAX 100         // Numerode caracteres maximo que as strings podem ter (99 + 1 para o \0)
+#include "../utils/utils.h"
 
 #define MAX_LEVEL 3        // Número máximo de níveis
 #define MAX_USER 5         // Número máximo de jogadores
@@ -18,12 +14,6 @@ typedef struct {
     char username[MAX];  // Nome do jogador
     int x, y;            // Posição
 } Player;
-
-// Estrutura de dados do nível
-typedef struct {
-    char board[ROWS][COLLUMN];  // Tabuleiro
-    int level;                  // Nível
-} Level;
 
 // Estrutura de dados da parede em movimento
 typedef struct {
