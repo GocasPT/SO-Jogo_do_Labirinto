@@ -2,6 +2,7 @@
 #define UI_H
 
 #include <ncurses.h>
+#include <pthread.h>
 
 #include "../../utils/utils.h"
 
@@ -27,22 +28,15 @@
 
 // Estrutura que guarda as janelas
 typedef struct {
-    WINDOW* maze;   // Janela do tabuleiro
-    WINDOW* info;   // Janela das informações
-    WINDOW* notification;   // Janela das notificações
-    WINDOW* console;    // Janela do console
+    WINDOW* maze;          // Janela do tabuleiro
+    WINDOW* info;          // Janela das informações
+    WINDOW* notification;  // Janela das notificações
+    WINDOW* console;       // Janela do console
 } UI;
-
-// Estrutura principal do jogoUI
-typedef struct {
-    Level level;    // Estrutura do nível
-    UI ui;  // Estrutura das janelas
-    User user;  // Estrutura do jogador
-} JogoUI;
 
 void configUI(UI* ui);
 void drawMaze(UI* ui, char board[ROWS][COLLUMN]);
 int validateCommand(UI* ui, char* input);
-void readInput(JogoUI* jogoUI);
+void readInput(UI* ui, Level* level);
 
 #endif  // UI_H

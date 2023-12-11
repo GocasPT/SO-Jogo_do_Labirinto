@@ -9,6 +9,9 @@
 #define ROWS 16         // 16 linhas
 #define COLLUMN 40 + 1  // 40 colunas + 1 para o \0
 
+#define FIFO_JOGOUI "fifo_JogoUI_%d"
+#define FIFO_MOTOR "fifo_Motor"
+
 // Estruturas de dados do jogadore
 typedef struct {
     pid_t PID;           // PID do processo do jogador

@@ -6,7 +6,7 @@ MOTOR = motor
 BOT = bot
 NCURSES = -lncursesw
 THREAD = -pthread
-CFLAGS = -Wall -Werror -Wextra
+CFLAGS = -Wall -Wextra
 C = gcc
 
 UTILS_DIR = ./${UTILS}/${UTILS}
@@ -18,8 +18,8 @@ MOTOR_NAMEPIPE_DIR = ./${MOTOR}/${NAMEPIPE}/${NAMEPIPE}
 
 all: jogoUI motor bot
 
-jogoUI: ${UTILS_DIR}.h ${JOGOUI_DIR}.c ${JOGOUI_DIR}.h ${UI_DIR}.c ${UI_DIR}.h
-	${C} -o ./${JOGOUI}/${JOGOUI} ${UI_DIR}.c ${UI_DIR}.h ${UTILS_DIR}.h ${JOGOUI_DIR}.c ${JOGOUI_DIR}.h ${NCURSES} ${CFLAGS}
+jogoUI: ${UTILS_DIR}.h ${JOGOUI_DIR}.c ${JOGOUI_DIR}.h ${UI_DIR}.c ${UI_DIR}.h ${JOGOUI_NAMEPIPE_DIR}.c ${JOGOUI_NAMEPIPE_DIR}.h
+	${C} -o ./${JOGOUI}/${JOGOUI} ${UI_DIR}.c ${UI_DIR}.h ${UTILS_DIR}.h ${JOGOUI_NAMEPIPE_DIR}.c ${JOGOUI_NAMEPIPE_DIR}.h ${JOGOUI_DIR}.c ${JOGOUI_DIR}.h ${NCURSES} ${CFLAGS} ${THREAD}
 
 motor: ./${MOTOR}/${MOTOR}.c 
 	${C} -o ./${MOTOR}/${MOTOR} -s ./${MOTOR}/${MOTOR}.c
