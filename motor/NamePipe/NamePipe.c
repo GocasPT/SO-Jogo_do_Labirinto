@@ -10,7 +10,7 @@ int createNamePipe(char FIFO_NAME[]) {
 
     result = mkfifo(FIFO_NAME, 0666);
     if (result == -1) {
-        printf("Erro ao criar o FIFO do jogador\n");
+        printf("Erro ao criar o FIFO do motor\n");
         return -1;
     }
 
@@ -20,13 +20,15 @@ int createNamePipe(char FIFO_NAME[]) {
 // TODO: docs
 void* readNamePipe(void* lpram) {
     ThreadData* dados = (ThreadData*)lpram;
+    CommandToServer cmd;
     int fd;
 
     // Abrir os fifos
     // TODO: caso de erro, fechar o processo
     fd = open(dados->FIFO_NAME, O_RDONLY);
     if (fd == -1) {
-        wprintw(dados->ui->notification, "Erro ao abrir o FIFO do jogador\n");
+        // wprintw(dados->ui->notification, "Erro ao abrir o FIFO do jogador\n");
+        printf("Erro ao abrir o FIFO do motor\n");
         dados->endThread = 1;
         close(fd);
         unlink(dados->FIFO_NAME);
@@ -36,9 +38,11 @@ void* readNamePipe(void* lpram) {
     int nBytes;
 
     while (dados->endThread != 1) {
-        nBytes = read(fd, dados->data, sizeof(DataRecive));
+        // nBytes = read(fd, dados->data, sizeof(DataRecive));
+        nBytes = read(fd, &cmd, sizeof(CommandToServer));
         if (nBytes == -1) {
-            wprintw(dados->ui->notification, "Erro ao ler o FIFO do jogador\n");
+            // wprintw(dados->ui->notification, "Erro ao ler o FIFO do jogador\n");
+            printf("Erro ao ler o FIFO do motor\n");
             dados->endThread = 1;
             close(fd);
             unlink(dados->FIFO_NAME);
@@ -47,7 +51,8 @@ void* readNamePipe(void* lpram) {
             continue;
         else {
             // TODO: tratamento de dados
-            wprintw(dados->ui->notification, "Lido %d bytes do FIFO do jogador\n", nBytes);
+            // wprintw(dados->ui->notification, "Lido %d bytes do FIFO do jogador\n", nBytes);
+            printf("Lido %d bytes do FIFO do motor\n", nBytes);
         }
     }
 
@@ -60,7 +65,7 @@ void* readNamePipe(void* lpram) {
 void writeNamePipe(char FIFO_NAME[], CommandToServer cmd) {
     int fd;
 
-    fd = open(FIFO_NAME, O_WRONLY);
+    /*fd = open(FIFO_NAME, O_WRONLY);
     // TODO: checkar erro
     if (fd == -1) {
         printf("Erro ao abrir o FIFO do servidor\n");
@@ -78,7 +83,7 @@ void writeNamePipe(char FIFO_NAME[], CommandToServer cmd) {
         printf("Escrito %d bytes no FIFO do servidor\n", nBytes);
     }
 
-    close(fd);
+    close(fd);*/
 
     return;
 }

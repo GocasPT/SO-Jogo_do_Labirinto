@@ -1,31 +1,44 @@
+C = gcc
+NCURSES = -lncursesw
+THREAD = -pthread
+CFLAGS = -Wall -Wextra
+
 UTILS = utils
 NAMEPIPE = NamePipe
 JOGOUI = jogoUI
 UI = UI
 MOTOR = motor
+CONSOLA = Consola
+MAPMANAGER = MapManager
 BOT = bot
-NCURSES = -lncursesw
-THREAD = -pthread
-CFLAGS = -Wall -Wextra
-C = gcc
+
 
 UTILS_DIR = ./${UTILS}/${UTILS}
+
 JOGOUI_DIR = ./${JOGOUI}/${JOGOUI}
-UI_DIR = ./${JOGOUI}/${UI}/${UI}
 JOGOUI_NAMEPIPE_DIR = ./${JOGOUI}/${NAMEPIPE}/${NAMEPIPE}
+UI_DIR = ./${JOGOUI}/${UI}/${UI}
+
 MOTOR_DIR = ./${MOTOR}/${MOTOR}
 MOTOR_NAMEPIPE_DIR = ./${MOTOR}/${NAMEPIPE}/${NAMEPIPE}
+CONSOLA_DIR = ./${MOTOR}/${CONSOLA}/${CONSOLA}
+MAPMANAGER_DIR = ./${MOTOR}/${MAPMANAGER}/${MAPMANAGER}
+
+BOT_DIR = ./${BOT}/${BOT}
 
 all: jogoUI motor bot
 
-jogoUI: ${UTILS_DIR}.h ${JOGOUI_DIR}.c ${JOGOUI_DIR}.h ${UI_DIR}.c ${UI_DIR}.h ${JOGOUI_NAMEPIPE_DIR}.c ${JOGOUI_NAMEPIPE_DIR}.h
-	${C} -o ./${JOGOUI}/${JOGOUI} ${UI_DIR}.c ${UI_DIR}.h ${UTILS_DIR}.h ${JOGOUI_NAMEPIPE_DIR}.c ${JOGOUI_NAMEPIPE_DIR}.h ${JOGOUI_DIR}.c ${JOGOUI_DIR}.h ${NCURSES} ${CFLAGS} ${THREAD}
+jogoUI: ${JOGOUI_DIR}.c ${JOGOUI_NAMEPIPE_DIR}.c ${UI_DIR}.c
+	${C} -o ${JOGOUI_DIR} -s ${JOGOUI_DIR}.c ${JOGOUI_NAMEPIPE_DIR}.c ${UI_DIR}.c ${NCURSES} ${THREAD} ${CFLAGS}
 
-motor: ./${MOTOR}/${MOTOR}.c 
-	${C} -o ./${MOTOR}/${MOTOR} -s ./${MOTOR}/${MOTOR}.c
+motor: ${MOTOR_DIR}.c ${MOTOR_NAMEPIPE_DIR}.c ${CONSOLA_DIR}.c ${MAPMANAGER_DIR}.c
+	${C} -o ${MOTOR_DIR} -s ${MOTOR_DIR}.c ${MOTOR_NAMEPIPE_DIR}.c ${CONSOLA_DIR}.c ${MAPMANAGER_DIR}.c ${THREAD} ${CFLAGS}
 
-bot: ./${BOT}/${BOT}.c
-	${C} -o ./${BOT}/${BOT} -s ./${BOT}/${BOT}.c
+bot: ${BOT_DIR}.c
+	${C} -o ${BOT_DIR} -s ${BOT_DIR}.c
 
 clean:
-	rm ./${JOGOUI}/${JOGOUI} ./${MOTOR}/${MOTOR} ./${BOT}/${BOT}
+	rm ${JOGOUI_DIR} ${MOTOR_DIR} ${BOT_DIR}
+
+cleanExtra: clean
+	rm fifo_*
