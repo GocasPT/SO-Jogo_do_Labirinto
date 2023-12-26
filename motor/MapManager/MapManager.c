@@ -147,7 +147,7 @@ int execBot(Motor* motor) {
     printf("%s A ler o pipe:\n", TAG_MOTOR);
 
     // Loop infinito para ler o pipe
-    // TODO: thread
+    // TODO: thread + select
     while (1) {
         /**
          * Lê o pipe

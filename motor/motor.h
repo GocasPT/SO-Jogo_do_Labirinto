@@ -10,7 +10,7 @@
 #define MAX_MOVE_BLOCK5 5  // Número máximo de blocos móveis de 5 segundos
 
 #define TAG_MOTOR "<Motor>"
-#define TAG_CMD ">>"
+#define TAG_CMD " >>"
 
 // Estrutura de dados do jogador
 typedef struct {
@@ -44,14 +44,10 @@ typedef struct {
     int botList[MAX_BOT];                        // Lista de bots
     Rock rockList[MAX_ROCK];                     // Lista de pedras
     MoveBlock moveBlockList[MAX_MOVE_BLOCK5];    // Lista de paredes em movimento
-} Motor;
 
-// Estrutura de dados do contexto do sinal
-// TODO: converter para int e ser algo mais sequencial (sai do loop e acabas as cenas)
-typedef struct {
-    int endFlag;   // Flag de saida - 0: continua; 1: termina
-    int *botList;  // Ponteiro para a lista de bots
-    int *nBotOn;   // Ponteiro para o número de bots
-} SignalContext;
+    pthread_t threadReadPipe;  // Thread de leitura do name pipe
+    pthread_t threadReadBots;  // Thread de leitura dos bots
+    pthread_t threadTick;      // Thread que gera o tick do jogo
+} Motor;
 
 #endif  // MOTOR_H

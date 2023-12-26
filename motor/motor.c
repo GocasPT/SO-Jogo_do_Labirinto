@@ -1,5 +1,6 @@
 #include "motor.h"
 
+#include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,34 +9,69 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "Consola/Consola.h"
 #include "MapManager/MapManager.h"
+#include "NamePipe/NamePipe.h"
 
-// Variável global (para o sinal)
-// TODO: mudar para outro tipo de variável
-SignalContext contexto;  // Estrutura que guarda o contexto do sinal
+// TODO: docs
+int endFlag;
 
-// TODO: atualizar a função
-/**
- * Handler do sinal
- * \param signum Número do sinal
- */
-void singalHandler(int signum) {
-    printf("\n%s Recebi o sinal %d [Sinal para sair]\nComecar a terminar o motor e os seus mecanismos\n", TAG_MOTOR, signum);
-
+// TODO: docs
+void singalHandler(int sig, siginfo_t* info, void* context) {
     //  Ativa a endFlag para sair dos loops
-    printf("Parar de ler o pipe dos bots\n");
-    contexto.endFlag = 1;
+    endFlag = 1;
+}
 
-    // Termina os bots
-    printf("Matar bots\n");
-    union sigval val;
-    for (int i = 0; i < *contexto.nBotOn; i++) {
-        printf("Bot: %d [PID - %d]\n", i + 1, contexto.botList[i]);
-        sigqueue(contexto.botList[i], SIGINT, val);
+/**
+ * Função que veririca se o motor está a correr
+ */
+int checkMotorOpen() {
+    int fd;
+    fd = open(FIFO_MOTOR, O_WRONLY);
+    if (fd != -1) {
+        printf("\n%s O motor esta a correr\n", TAG_MOTOR);
+        return -1;
     }
+    close(fd);
 
-    // Sai da função e avisa caso nao tenha acabado introduzir o comando ou ENTER
-    printf("%s Caso nao tenha saido, precione ENTER para enviar o comando que esta em espera\n", TAG_MOTOR);
+    return 0;
+}
+
+// TODO: docs
+int configThreads(Motor* motor) {
+    ThreadData threadData;
+    int resutl;
+
+    threadData.endThread = &endFlag;
+    threadData.level = &motor->level;
+
+    printf("%s Configuracao da threads:\n", TAG_MOTOR);
+
+    // TODO: argumento da thread (melhor uma srtuct dedica ou mandar o motor?)
+    resutl = pthread_create(&motor->threadReadPipe, NULL, readNamePipe, threadData);
+    if (resutl != 0) {
+        printf("Erro ao criar a thread de leitura do name pipe\n");
+        return -1;
+    } else
+        printf("%s Thread'readNamePipe' criada\n" TAG_MOTOR);
+
+    // TODO: crias função/thread para a leitura dos bots + argumento
+    /*resutl = pthread_create(&motor->threadReadBots, NULL, readBots, NULL);
+    if (resutl != 0) {
+        printf("Erro ao criar a thread de leitura dos bots\n");
+        return -1;
+    } else
+        printf("%s Thread'readBots' criada\n" TAG_MOTOR);*/
+
+    // TODO: crias função/thread para os ticks + argumento
+    /*resutl = pthread_create(&motor->threadTick, NULL, NULL, NULL);
+    if (resutl != 0) {
+        printf("Erro ao criar a thread de leitura dos bots\n");
+        return -1;
+    } else
+        printf("%s Thread 'tick' criada\n" TAG_MOTOR);*/
+
+    return 0;
 }
 
 /**
@@ -51,9 +87,11 @@ int configServer(Motor* motor) {
     if (readLevelMap("map/level1.txt", motor->level.board) == -1)
         return -1;
 
+    // TODO: better load inicial map
+
     struct sigaction signal;
-    signal.sa_handler = singalHandler;
-    signal.sa_flags = SA_SIGINFO | SA_RESTART;
+    signal.sa_sigaction = singalHandler;
+    signal.sa_flags = SA_SIGINFO;
     sigaction(SIGINT, &signal, NULL);
 
     // Variáveis de ambiente
@@ -79,10 +117,8 @@ int configServer(Motor* motor) {
     motor->nRockOn = 0;
     motor->nMoveBlockOn = 0;
 
-    // Configuração dos ponteiro do contexto do sinal
-    contexto.endFlag = 0;
-    contexto.botList = motor->botList;
-    contexto.nBotOn = &motor->nBotOn;
+    // Configuração da flag global para sair do programa
+    endFlag = 0;
 
     // Imprime a configuração do servidor
     printf("%s Configuração do servidor:\n", TAG_MOTOR);
@@ -96,13 +132,37 @@ int configServer(Motor* motor) {
     printf("Tempo de desconto: %d\n", motor->stepTimerGame);
     printf("Numero minimo de usuarios: %d\n\n", motor->nUserMin);
 
+    printf("%s A criar o FIFO para a comunicacao com o motor\n", TAG_MOTOR);
+    if (createNamePipe() == -1)
+        return -1;
+
+    if (configThreads(motor) == -1)
+        return -1;
+
     return 0;
 }
 
+// TODO: docs
+void closeServer(Motor* motor) {
+    // TODO: fechar programa (esperar thread e fazer limpeza das cenas)
+    printf("%s A sair do programa...\n", TAG_MOTOR);
+
+    for (int i = 0; i < motor->nBotOn; i++) {
+        printf("Bot: %d [PID - %d]\n", i + 1, motor->botList[i]);
+        sigqueue(motor->botList[i], SIGINT, (const union sigval)NULL);
+        waitpid(motor->botList[i], NULL, 0);
+    }
+
+    // TODO: docs
+    pthread_join(motor->threadReadPipe, NULL);
+    // pthread_join(motor->threadReadBots, NULL);
+    // pthread_join(motor->threadTick, NULL);
+
+    unlink(FIFO_MOTOR);
+}
+
 int main() {
-    Motor servidor;   // Estrutura que guarda o servidor
-    char input[MAX];  // String que guarda o input do utilizador
-    char* inputResult;
+    Motor servidor;  // Estrutura que guarda o servidor
 
     // Verifica se existe um motor aberto
     // TODO: checkMotor();
@@ -111,27 +171,11 @@ int main() {
     if (configServer(&servidor) == -1)
         return -1;
 
-    // TODO: thread
-    while (!contexto.endFlag) {
-        // Imprime o prompt e lê o input do utilizador
-        printf("%s ", TAG_CMD);
-        inputResult = fgets(input, sizeof(input), stdin);
+    // TODO: docs
+    readConsola(&servidor, &endFlag);
 
-        if (inputResult == NULL) {
-            printf("%s Erro ao ler o input\n", TAG_MOTOR);
-            break;
-        }
-
-        /**
-         * Valida o comando
-         * Se o comando for "end" retorna -1 para sair do programa
-         */
-        if (validateCommand(input, &servidor) == -1)
-            break;
-    }
-
-    // TODO: fechar programa (esperar thread e fazer limpeza das cenas)
-    printf("%s A sair do programa...\n", TAG_MOTOR);
+    // TODOS: docs
+    closeServer(&servidor);
 
     return 0;
 }

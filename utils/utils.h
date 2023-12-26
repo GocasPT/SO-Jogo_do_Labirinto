@@ -27,6 +27,8 @@
 #define ARG_LEFT "left"    // TODO: docs
 #define ARG_RIGHT "right"  // TODO: docs
 
+#define FEEDBACK_CLOSE "close"  // TODO: docs
+
 // Estruturas de dados do jogadore
 typedef struct {
     pid_t PID;           // PID do processo do jogador
@@ -40,6 +42,7 @@ typedef struct {
 } Level;
 
 // Estrutura de dados do feedback do motor
+// TODO: ver o que se pode user aqui (respotas do motor)
 typedef struct {
     int numPlayers;        // Numero de jogadores
     char players[5][MAX];  // Lista de jogadores
@@ -62,9 +65,9 @@ typedef struct {
 
 // Estrutura de dados dos comandos que será enviado para o motor
 typedef struct {
-    pid_t PID;     // PID do processo do jogador
-    char cmd[10];  // Comando - Identificar do tipo de comando (move, msg, plist)
-    char arg[20];  // Argumentos do comando (move: up, down, left, right; msg: username)
+    pid_t PID;      // PID do processo do jogador
+    char cmd[10];   // Comando - Identificar do tipo de comando (move, msg, plist)
+    char arg[MAX];  // Argumentos do comando (move: up, down, left, right; msg: username)
 } CommandToServer;
 
 #endif  // UTILS_H

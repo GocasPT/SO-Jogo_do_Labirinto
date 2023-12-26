@@ -12,7 +12,6 @@ CONSOLA = Consola
 MAPMANAGER = MapManager
 BOT = bot
 
-
 UTILS_DIR = ./${UTILS}/${UTILS}
 
 JOGOUI_DIR = ./${JOGOUI}/${JOGOUI}
@@ -39,6 +38,3 @@ bot: ${BOT_DIR}.c
 
 clean:
 	rm ${JOGOUI_DIR} ${MOTOR_DIR} ${BOT_DIR}
-
-cleanExtra: clean
-	rm fifo_*

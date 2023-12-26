@@ -5,10 +5,10 @@
 #include <stdio.h>
 #include <string.h>
 
-int createNamePipe(char FIFO_NAME[]) {
+int createNamePipe() {
     int result;
 
-    result = mkfifo(FIFO_NAME, 0666);
+    result = mkfifo(FIFO_MOTOR, 0666);
     if (result == -1) {
         printf("Erro ao criar o FIFO do motor\n");
         return -1;
@@ -25,34 +25,41 @@ void* readNamePipe(void* lpram) {
 
     // Abrir os fifos
     // TODO: caso de erro, fechar o processo
-    fd = open(dados->FIFO_NAME, O_RDONLY);
+    fd = open(FIFO_MOTOR, O_RDONLY);
     if (fd == -1) {
-        // wprintw(dados->ui->notification, "Erro ao abrir o FIFO do jogador\n");
         printf("Erro ao abrir o FIFO do motor\n");
         dados->endThread = 1;
         close(fd);
-        unlink(dados->FIFO_NAME);
+        unlink(FIFO_MOTOR);
         pthread_exit(NULL);
     }
 
     int nBytes;
 
     while (dados->endThread != 1) {
-        // nBytes = read(fd, dados->data, sizeof(DataRecive));
         nBytes = read(fd, &cmd, sizeof(CommandToServer));
         if (nBytes == -1) {
-            // wprintw(dados->ui->notification, "Erro ao ler o FIFO do jogador\n");
             printf("Erro ao ler o FIFO do motor\n");
             dados->endThread = 1;
             close(fd);
-            unlink(dados->FIFO_NAME);
+            unlink(FIFO_MOTOR);
             pthread_exit(NULL);
         } else if (nBytes == 0)
             continue;
         else {
             // TODO: tratamento de dados
-            // wprintw(dados->ui->notification, "Lido %d bytes do FIFO do jogador\n", nBytes);
             printf("Lido %d bytes do FIFO do motor\n", nBytes);
+            printf("[PID: %d] [CMD: %s] [ARG: %s]\n", cmd.PID, cmd.cmd, cmd.arg);
+
+            char FIFO_USER[MAX];
+            sprintf(FIFO_USER, FIFO_JOGOUI, cmd.PID);
+
+            DataRecive data = {
+                DATA_LEVEL,
+                dados->level,
+            };
+
+            writeNamePipe(FIFO_USER, data);
         }
     }
 
@@ -62,7 +69,7 @@ void* readNamePipe(void* lpram) {
 }
 
 // TODO: docs
-void writeNamePipe(char FIFO_NAME[], CommandToServer cmd) {
+void writeNamePipe(char FIFO_NAME[], DataRecive data) {
     int fd;
 
     /*fd = open(FIFO_NAME, O_WRONLY);

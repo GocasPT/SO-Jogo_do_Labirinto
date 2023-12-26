@@ -11,6 +11,11 @@
 
 int endFlag;  // TODO: docs
 
+// TODO: docs
+void signalHandler(int sig, siginfo_t* info, void* context) {
+    endFlag = 1;
+}
+
 /**
  * Função que veririca se o motor está a correr
  */
@@ -18,7 +23,7 @@ int checkMotorOpen() {
     int fd;
     fd = open(FIFO_MOTOR, O_WRONLY);
     if (fd == -1) {
-        printf("\n%s O motor não está a correr\n", PRINT_TAG);
+        printf("\n%s O motor nao esta a correr\n", PRINT_TAG);
         return -1;
     }
     close(fd);
@@ -26,18 +31,16 @@ int checkMotorOpen() {
     return 0;
 }
 
-// TODO: docs
-void signalHandler() {
-    endFlag = 1;
-}
-
+// TODO: mudar para int (melhor sintaxe)
 /**
  * Função que configuras as threads
  * \param jogoUI Ponteiro da estrutura principal do jogoUI
  */
 void configThreads(JogoUI* jogoUI, ThreadData* threadData) {
+    int result;
+
     // Thread de leitura dos name pipes (servidor e player)
-    int result = pthread_create(&jogoUI->threadReadPipe, NULL, readNamePipe, threadData);
+    result = pthread_create(&jogoUI->threadReadPipe, NULL, readNamePipe, threadData);
     if (result != 0) {
         wprintw(jogoUI->ui.notification, "Erro ao criar a thread de leitura dos name pipes\n");
         unlink(threadData->FIFO_NAME);
@@ -67,7 +70,7 @@ int main(int argc, char* argv[]) {
     // Configura o signal handler
     struct sigaction sa;
     sa.sa_handler = signalHandler;
-    sa.sa_flags = SA_SIGINFO | SA_RESTART;
+    sa.sa_flags = SA_SIGINFO;
     sigaction(SIGINT, &sa, NULL);
 
     // Inicializa o ncurses e configura as janelas
@@ -94,6 +97,7 @@ int main(int argc, char* argv[]) {
         getpid(),
         CMD_CONNECT,
     };
+    strcpy(connectCmd.arg, jogoUI.user.username);
     writeNamePipe(FIFO_MOTOR, connectCmd);
 
     // Loop principal do jogoUI

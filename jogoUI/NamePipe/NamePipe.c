@@ -20,6 +20,7 @@ int createNamePipe(char FIFO_NAME[]) {
 // TODO: docs
 void* readNamePipe(void* lpram) {
     ThreadData* dados = (ThreadData*)lpram;
+    DataRecive dataRecive;
     int fd;
 
     // Abrir os fifos
@@ -36,7 +37,7 @@ void* readNamePipe(void* lpram) {
     int nBytes;
 
     while (dados->endThread != 1) {
-        nBytes = read(fd, dados->data, sizeof(DataRecive));
+        nBytes = read(fd, &dataRecive, sizeof(DataRecive));
         if (nBytes == -1) {
             wprintw(dados->ui->notification, "Erro ao ler o FIFO do jogador\n");
             dados->endThread = 1;

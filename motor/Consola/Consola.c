@@ -1,6 +1,31 @@
 #include "Consola.h"
 
+#include <stdio.h>
 #include <string.h>
+
+// TODO: docs
+void readConsola(Motor* motor, int* endFlag) {
+    char input[MAX];  // String que guarda o input do utilizador
+    char* inputResult;
+
+    while (!(*endFlag)) {
+        // Imprime o prompt e lê o input do utilizador
+        printf("%s ", TAG_CMD);
+        inputResult = fgets(input, sizeof(input), stdin);
+
+        if (inputResult == NULL) {
+            printf("%s Erro ao ler o input\n", TAG_MOTOR);
+            break;
+        }
+
+        /**
+         * Valida o comando
+         * Se o comando for "end" retorna -1 para sair do programa
+         */
+        if (validateCommand(input, motor) == -1)
+            break;
+    }
+}
 
 /**
  * Valida o comando
@@ -111,6 +136,7 @@ void showInfo(Motor motor, char type) {
         //  Nível
         case 'l':
             printf("Level: %d\n", motor.level.level);
+            // TODO: mostrar mapa
             break;
 
         // Tempo

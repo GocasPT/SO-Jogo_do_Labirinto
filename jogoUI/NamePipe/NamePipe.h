@@ -7,7 +7,6 @@
 typedef struct {
     int* endThread;       //
     char FIFO_NAME[MAX];  //
-    DataRecive* data;     //
     Level* level;         //
     UI* ui;               //
 } ThreadData;

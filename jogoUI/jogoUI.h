@@ -11,8 +11,8 @@ typedef struct {
     Level level;               // Estrutura do nível
     UI ui;                     // Estrutura das janelas
     User user;                 // Estrutura do jogador
-    pthread_t threadReadPipe;  // Thread de leitura dos name pipes
     char FIFO_NAME[MAX];       //
+    pthread_t threadReadPipe;  // Thread de leitura do name pipe
 } JogoUI;
 
 #endif  // JOGOUI_H

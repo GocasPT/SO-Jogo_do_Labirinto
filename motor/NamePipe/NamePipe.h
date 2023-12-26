@@ -3,14 +3,14 @@
 
 #include "../../utils/utils.h"
 
+// TODO: verificar esta struct
 typedef struct {
-    int* endThread;       //
-    char FIFO_NAME[MAX];  //
-    Level* level;         //
+    int* endThread;  //
+    Level* level;    //
 } ThreadData;
 
-int createNamePipe(char FIFO_NAME[]);
+int createNamePipe();
 void* readNamePipe(void* lpram);
-void writeNamePipe(char FIFO_NAME[], CommandToServer cmd);
+void writeNamePipe(char FIFO_NAME[], DataRecive data);
 
 #endif  // NAMEPIPE_H
