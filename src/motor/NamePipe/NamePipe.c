@@ -4,6 +4,10 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#include "../motor.h"
 
 int createNamePipe() {
     int result;
@@ -19,16 +23,17 @@ int createNamePipe() {
 
 // TODO: docs
 void* readNamePipe(void* lpram) {
-    ThreadData* dados = (ThreadData*)lpram;
+    ThreadData_ReadPipe* dados = (ThreadData_ReadPipe*)lpram;
     CommandToServer cmd;
     int fd;
 
-    // Abrir os fifos
+    // Abrir o fifo do motor
+    // TODO: Nota: ele fica à espera de um cliente por definição do FIFO [se tiver 'O_NONBLOCK' nao acontecia]
     // TODO: caso de erro, fechar o processo
     fd = open(FIFO_MOTOR, O_RDONLY);
     if (fd == -1) {
-        printf("Erro ao abrir o FIFO do motor\n");
-        dados->endThread = 1;
+        printf("\nErro ao abrir o FIFO do motor\n");
+        *(dados->endThread) = 1;
         close(fd);
         unlink(FIFO_MOTOR);
         pthread_exit(NULL);
@@ -36,11 +41,11 @@ void* readNamePipe(void* lpram) {
 
     int nBytes;
 
-    while (dados->endThread != 1) {
+    while (*(dados->endThread) != 1) {
         nBytes = read(fd, &cmd, sizeof(CommandToServer));
         if (nBytes == -1) {
             printf("Erro ao ler o FIFO do motor\n");
-            dados->endThread = 1;
+            *(dados->endThread) = 1;
             close(fd);
             unlink(FIFO_MOTOR);
             pthread_exit(NULL);
@@ -62,6 +67,8 @@ void* readNamePipe(void* lpram) {
             writeNamePipe(FIFO_USER, data);
         }
     }
+
+    printf("TEST\n");
 
     close(fd);
 

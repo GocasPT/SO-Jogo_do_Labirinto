@@ -56,11 +56,14 @@ typedef struct {
 } MSG;
 
 // Estrutura de dados do pacote de mensagem que o jogoUI vai receber (do motor ou de outro jogoUI)
+// TODO: ver struct (e union)
 typedef struct {
-    int dataType;       // Tipo de dados (Level, FeedBack, MSG)
-    Level level;        // Dados do nível
-    FeedBack feedBack;  // Dados do feedback do motor
-    MSG msg;            // Dados da mensagem
+    int dataType;  // Tipo de dados (Level, FeedBack, MSG)
+    union {
+        Level level;        // Dados do nível
+        FeedBack feedBack;  // Dados do feedback do motor
+        MSG msg;            // Dados da mensagem
+    } data;                 // Dados (reduzir tamanho da struct)
 } DataRecive;
 
 // Estrutura de dados dos comandos que será enviado para o motor

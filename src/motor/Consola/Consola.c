@@ -1,5 +1,6 @@
 #include "Consola.h"
 
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -14,7 +15,7 @@ void readConsola(Motor* motor, int* endFlag) {
         inputResult = fgets(input, sizeof(input), stdin);
 
         if (inputResult == NULL) {
-            printf("%s Erro ao ler o input\n", TAG_MOTOR);
+            // TODO: printf("%s Erro ao ler o input\n", TAG_MOTOR);
             break;
         }
 
@@ -75,6 +76,7 @@ int validateCommand(char* input, Motor* motor) {
 
         else if (!strcmp(cmd, "end")) {
             printf("%s Comando end\n", TAG_MOTOR);
+            sigqueue(getpid(), SIGINT, (const union sigval)NULL);
             return -1;
         }
 

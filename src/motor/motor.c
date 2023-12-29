@@ -1,6 +1,7 @@
 #include "motor.h"
 
 #include <fcntl.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,46 +15,47 @@
 #include "NamePipe/NamePipe.h"
 
 // TODO: docs
-int endFlag;
+int endFlag = 0;
 
 // TODO: docs
 void singalHandler(int sig, siginfo_t* info, void* context) {
     //  Ativa a endFlag para sair dos loops
     endFlag = 1;
+    printf("SIGNAL: %d\n", sig);
 }
 
 /**
  * Função que veririca se o motor está a correr
  */
-int checkMotorOpen() {
+void checkMotorOpen() {
     int fd;
     fd = open(FIFO_MOTOR, O_WRONLY);
     if (fd != -1) {
         printf("\n%s O motor esta a correr\n", TAG_MOTOR);
-        return -1;
+        exit(EXIT_FAILURE);
     }
     close(fd);
-
-    return 0;
 }
 
 // TODO: docs
-int configThreads(Motor* motor) {
-    ThreadData threadData;
+void configThreads(Motor* motor) {
     int resutl;
 
-    threadData.endThread = &endFlag;
-    threadData.level = &motor->level;
-
-    printf("%s Configuracao da threads:\n", TAG_MOTOR);
+    motor->threadReadPipeData = (ThreadData_ReadPipe){
+        .endThread = &endFlag,
+        .level = &motor->level,
+        .nUserOn = &motor->nUserOn,
+        .userList = &motor->userList,
+        .playerList = &motor->playerList,
+    };
 
     // TODO: argumento da thread (melhor uma srtuct dedica ou mandar o motor?)
-    resutl = pthread_create(&motor->threadReadPipe, NULL, readNamePipe, threadData);
+    resutl = pthread_create(&motor->threadReadPipe, NULL, readNamePipe, &motor->threadReadPipeData);
     if (resutl != 0) {
         printf("Erro ao criar a thread de leitura do name pipe\n");
-        return -1;
+        exit(EXIT_FAILURE);
     } else
-        printf("%s Thread'readNamePipe' criada\n" TAG_MOTOR);
+        printf("Thread \'readNamePipe\' criada\n");
 
     // TODO: crias função/thread para a leitura dos bots + argumento
     /*resutl = pthread_create(&motor->threadReadBots, NULL, readBots, NULL);
@@ -70,28 +72,27 @@ int configThreads(Motor* motor) {
         return -1;
     } else
         printf("%s Thread 'tick' criada\n" TAG_MOTOR);*/
-
-    return 0;
 }
 
 /**
  * Configura o servidor
  * \param motor Ponteiro da estrutura que guarda o servidor
  */
-int configServer(Motor* motor) {
+void configServer(Motor* motor) {
     // TODO [META 2]: "Mandar" o ficheiro → Mandar o caminha para a pasta com os mapas
     /**
      * Lê o mapa do ficheiro e coloca na estrutura do servidor
      * Se retornar -1, houve um erro ao ler o ficheiro
      */
-    if (readLevelMap("map/level1.txt", motor->level.board) == -1)
-        return -1;
+    if (readLevelMap("src/map/level1.txt", motor->level.board) == -1)
+        exit(EXIT_FAILURE);
 
     // TODO: better load inicial map
 
     struct sigaction signal;
     signal.sa_sigaction = singalHandler;
     signal.sa_flags = SA_SIGINFO;
+    // TODO: ifs
     sigaction(SIGINT, &signal, NULL);
 
     // Variáveis de ambiente
@@ -103,7 +104,7 @@ int configServer(Motor* motor) {
     // Verifica se as variáveis de ambiente foram lidas corretamente
     if (timerBegin_env == NULL || timerGame_env == NULL || stepTimerGame_env == NULL || nUserMin_env == NULL) {
         printf("%s Erro ao ler as variáveis de ambiente\n", TAG_MOTOR);
-        return -1;
+        exit(EXIT_FAILURE);
     }
 
     // Inicializa o servidor com os valores padrões
@@ -133,13 +134,10 @@ int configServer(Motor* motor) {
     printf("Numero minimo de usuarios: %d\n\n", motor->nUserMin);
 
     printf("%s A criar o FIFO para a comunicacao com o motor\n", TAG_MOTOR);
-    if (createNamePipe() == -1)
-        return -1;
+    createNamePipe();
 
-    if (configThreads(motor) == -1)
-        return -1;
-
-    return 0;
+    printf("%s Configuracao da threads:\n", TAG_MOTOR);
+    configThreads(motor);
 }
 
 // TODO: docs
@@ -165,11 +163,10 @@ int main() {
     Motor servidor;  // Estrutura que guarda o servidor
 
     // Verifica se existe um motor aberto
-    // TODO: checkMotor();
+    checkMotorOpen();
 
     //  Configura o servidor
-    if (configServer(&servidor) == -1)
-        return -1;
+    configServer(&servidor);
 
     // TODO: docs
     readConsola(&servidor, &endFlag);

@@ -2,6 +2,7 @@
 #define MOTOR_H
 
 #include "../utils/utils.h"
+#include "NamePipe/NamePipe.h"
 
 #define MAX_LEVEL 3        // Número máximo de níveis
 #define MAX_USER 10        // Número máximo de utilizadores
@@ -31,6 +32,17 @@ typedef struct {
     int time;  // Duração
 } Rock;
 
+// TODO: structs das thread datas (AQUI PARA N OUVER STRESS)
+//  TODO: verificar esta struct
+typedef struct {
+    int* endThread;  // Ponteiro para a flag de fim de thread
+    Level* level;    // Ponteiro para o nível
+
+    int* nUserOn;        //
+    User* userList;      //
+    Player* playerList;  //
+} ThreadData_ReadPipe;
+
 // Estrutura de dados do motor/servidor
 // TODO: verificar se tem num max de players
 typedef struct {
@@ -39,15 +51,16 @@ typedef struct {
     int timerGame, stepTimerGame;                // Tempo de jogo e tempo de desconto
     int nUserMin;                                // Número mínimo de jogadores
     int nUserOn, nBotOn, nRockOn, nMoveBlockOn;  // Número de jogadores, bots, pedras e paredes em movimento
-    User userList[MAX_USER];                     // Lista de utilizadores (conecxoes)
+    User userList[MAX_USER];                     // Lista de utilizadores (conexoes)
     Player playerList[MAX_USER];                 // Lista de jogadores (players)
     int botList[MAX_BOT];                        // Lista de bots
     Rock rockList[MAX_ROCK];                     // Lista de pedras
     MoveBlock moveBlockList[MAX_MOVE_BLOCK5];    // Lista de paredes em movimento
 
-    pthread_t threadReadPipe;  // Thread de leitura do name pipe
-    pthread_t threadReadBots;  // Thread de leitura dos bots
-    pthread_t threadTick;      // Thread que gera o tick do jogo
+    pthread_t threadReadPipe;                // Thread de leitura do name pipe
+    ThreadData_ReadPipe threadReadPipeData;  // Dados da thread de leitura do name pipe
+    pthread_t threadReadBots;                // Thread de leitura dos bots
+    pthread_t threadTick;                    // Thread que gera o tick do jogo
 } Motor;
 
 #endif  // MOTOR_H
