@@ -28,7 +28,7 @@ void* readNamePipe(void* lpram) {
     fd = open(dados->FIFO_NAME, O_RDONLY);
     if (fd == -1) {
         wprintw(dados->ui->notification, "Erro ao abrir o FIFO do jogador\n");
-        dados->endThread = 1;
+        *(dados->endThread) = 1;
         close(fd);
         unlink(dados->FIFO_NAME);
         pthread_exit(NULL);
@@ -36,7 +36,7 @@ void* readNamePipe(void* lpram) {
 
     int nBytes;
 
-    while (dados->endThread != 1) {
+    while (*(dados->endThread) != 1) {
         nBytes = read(fd, &dataRecive, sizeof(DataRecive));
         if (nBytes == -1) {
             wprintw(dados->ui->notification, "Erro ao ler o FIFO do jogador\n");
@@ -49,6 +49,9 @@ void* readNamePipe(void* lpram) {
         else {
             // TODO: tratamento de dados
             wprintw(dados->ui->notification, "Lido %d bytes do FIFO do jogador\n", nBytes);
+            wrefresh(dados->ui->notification);
+            if (dataRecive.dataType == DATA_LEVEL)
+                drawMaze(dados->ui, dataRecive.data.level.board);
         }
     }
 

@@ -1,5 +1,6 @@
 #include "UI.h"
 
+#include <signal.h>
 #include <string.h>
 
 /**
@@ -74,6 +75,7 @@ int validateCommand(UI* ui, char* input) {
         else if (!strcmp(cmd, "exit")) {
             wprintw(ui->notification, "Comando exit\nPreciona 'Enter' para sair");
             wrefresh(ui->notification);
+            sigqueue(getpid(), SIGINT, (const union sigval)NULL);
             // TODO: invocar 'writeNamePipe' com o comando 'exit' [notificar o motor que o jogador saiu]
             return 1;
         }
