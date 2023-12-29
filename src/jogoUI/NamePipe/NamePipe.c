@@ -4,6 +4,10 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#include "../jogoUI.h"
 
 int createNamePipe(char FIFO_NAME[]) {
     int result;
@@ -40,7 +44,7 @@ void* readNamePipe(void* lpram) {
         nBytes = read(fd, &dataRecive, sizeof(DataRecive));
         if (nBytes == -1) {
             wprintw(dados->ui->notification, "Erro ao ler o FIFO do jogador\n");
-            dados->endThread = 1;
+            *(dados->endThread) = 1;
             close(fd);
             unlink(dados->FIFO_NAME);
             pthread_exit(NULL);
@@ -48,10 +52,19 @@ void* readNamePipe(void* lpram) {
             continue;
         else {
             // TODO: tratamento de dados
-            wprintw(dados->ui->notification, "Lido %d bytes do FIFO do jogador\n", nBytes);
+            wprintw(dados->ui->notification, "Recebi %d bytes\n", nBytes);
             wrefresh(dados->ui->notification);
+
             if (dataRecive.dataType == DATA_LEVEL)
                 drawMaze(dados->ui, dataRecive.data.level.board);
+
+            else if (dataRecive.dataType == DATA_FEEDBACK) {
+                // TODO: logica
+            }
+
+            else if (dataRecive.dataType == DATA_MSG) {
+                // TODO: logica
+            }
         }
     }
 
@@ -64,12 +77,16 @@ void* readNamePipe(void* lpram) {
 void writeNamePipe(char FIFO_NAME[], CommandToServer cmd) {
     int fd;
 
+    printf("\nDEBUG WRITE\n");
+
     fd = open(FIFO_NAME, O_WRONLY);
     // TODO: checkar erro
     if (fd == -1) {
         printf("Erro ao abrir o FIFO do servidor\n");
         return;
     }
+
+    printf("DEBUG TOU ABERTO\n");
 
     int nBytes;
 

@@ -40,6 +40,7 @@ typedef struct {
 
     int* nUserOn;        //
     User* userList;      //
+    int* nPlayersOn;     //
     Player* playerList;  //
 } ThreadData_ReadPipe;
 
@@ -52,6 +53,7 @@ typedef struct {
     int nUserMin;                                // Número mínimo de jogadores
     int nUserOn, nBotOn, nRockOn, nMoveBlockOn;  // Número de jogadores, bots, pedras e paredes em movimento
     User userList[MAX_USER];                     // Lista de utilizadores (conexoes)
+    int nPlayersOn;                              // Número de jogadores
     Player playerList[MAX_USER];                 // Lista de jogadores (players)
     int botList[MAX_BOT];                        // Lista de bots
     Rock rockList[MAX_ROCK];                     // Lista de pedras

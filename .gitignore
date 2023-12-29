@@ -1,4 +1,6 @@
-/bot/bot
-/jogoUI/jogoUI
-/motor/motor
 /.vscode
+*.o
+bot
+jogoUI
+motor
+fifo_*

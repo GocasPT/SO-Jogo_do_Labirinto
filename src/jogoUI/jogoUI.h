@@ -1,10 +1,17 @@
 #ifndef JOGOUI_H
 #define JOGOUI_H
 
-#include "./NamePipe/NamePipe.h"
+#include "../utils/utils.h"
 #include "./UI/UI.h"
 
 #define PRINT_TAG "<JOGOUI> "
+
+typedef struct {
+    int* endThread;       //
+    char FIFO_NAME[MAX];  //
+    Level* level;         //
+    UI* ui;               //
+} ThreadData;
 
 // Estrutura principal do jogoUI
 typedef struct {

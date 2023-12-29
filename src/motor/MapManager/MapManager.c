@@ -49,6 +49,25 @@ int readLevelMap(char* path, char board[ROWS][COLLUMN]) {
     return 0;
 }
 
+// TODO: docs
+int loadLevelMap(char board[ROWS][COLLUMN]) {
+}
+
+// TODO: exportLevel (complete)
+// TODO: docs
+Level exportLevel(Level level, Player* playerList, int playerListSize /*, Rock* rockList, int rockListSize, MoveBlock* moveBlockList, int moveBlockListSize*/) {
+    Level exportLevel = level;
+
+    for (int i = 0; i < playerListSize; i++)
+        exportLevel.board[playerList[i].x][playerList[i].y] = 'P';
+
+    printf("Mapa:\n");
+    for (int i = 0; i < ROWS; i++)
+        printf("%s\n", exportLevel.board[i]);
+
+    return exportLevel;
+}
+
 /**
  * Executa o bot
  * \param motor Ponteiro da estrutura que guarda o servidor
@@ -169,4 +188,42 @@ int execBot(Motor* motor) {
     }
 
     return 0;
+}
+
+// TODO: docs
+void movePlayer(char board[ROWS][COLLUMN], Player* list, int listSize, char* username, char direction) {
+    Player* player;
+
+    for (int i = 0; i < listSize; i++) {
+        if (strcmp(list[i].username, username) == 0) {
+            player = &list[i];
+            break;
+        }
+    }
+
+    if (player == NULL)
+        return;
+
+    int x = player->x;
+    int y = player->y;
+
+    if (strcmp(direction, ARG_DOWN)) {
+        if (board[x + 1][y] == ' ')
+            player->x++;
+    }
+
+    else if (strcmp(direction, ARG_UP)) {
+        if (board[x - 1][y] == ' ')
+            player->x--;
+    }
+
+    else if (strcmp(direction, ARG_LEFT)) {
+        if (board[x][y - 1] == ' ')
+            player->y--;
+    }
+
+    else if (strcmp(direction, ARG_RIGHT)) {
+        if (board[x][y + 1] == ' ')
+            player->y++;
+    }
 }

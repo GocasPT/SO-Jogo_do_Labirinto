@@ -9,6 +9,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include "NamePipe/NamePipe.h"
+
 int endFlag;  // TODO: docs
 
 // TODO: docs

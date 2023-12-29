@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include "../MapManager/MapManager.h"
 #include "../UserManager/UserManager.h"
 #include "../motor.h"
 
@@ -29,8 +30,6 @@ void* readNamePipe(void* lpram) {
     int fd;
 
     // Abrir o fifo do motor
-    // TODO: Nota: ele fica à espera de um cliente por definição do FIFO [se tiver 'O_NONBLOCK' nao acontecia]
-    // TODO: caso de erro, fechar o processo
     fd = open(FIFO_MOTOR, O_RDONLY);
     if (fd == -1) {
         printf("\nErro ao abrir o FIFO do motor\n");
@@ -45,7 +44,7 @@ void* readNamePipe(void* lpram) {
     while (*(dados->endThread) != 1) {
         nBytes = read(fd, &cmd, sizeof(CommandToServer));
         if (nBytes == -1) {
-            printf("Erro ao ler o FIFO do motor\n");
+            printf("\nErro ao ler o FIFO do motor\n");
             *(dados->endThread) = 1;
             close(fd);
             unlink(FIFO_MOTOR);
@@ -53,32 +52,47 @@ void* readNamePipe(void* lpram) {
         } else if (nBytes == 0)
             continue;
         else {
-            // TODO: tratamento de dados
-            printf("Lido %d bytes do FIFO do motor\n", nBytes);
-            printf("[PID: %d] [CMD: %s] [ARG: %s]\n", cmd.PID, cmd.cmd, cmd.arg);
-
             if (strcmp(cmd.cmd, CMD_CONNECT) == 0) {
                 if (*(dados->nUserOn) >= MAX_USER) {
-                    printf("O servidor esta cheio\n");
+                    printf("%s O servidor esta cheio\n", TAG_MOTOR);
                     continue;
                 } else {
-                    printf("Pedido de ligacao de %s [%d]\n", cmd.arg, cmd.PID);
-                    if (addUser(cmd.PID, cmd.arg, dados->userList, dados->nUserOn) == 0)
-                        printf("Utilizador adicionado\n");
-                    else
-                        printf("Erro ao adicionar o utilizador\n");
+                    printf("%s Pedido de conexao de %s [%d]\n", TAG_MOTOR, cmd.arg, cmd.PID);
+                    if (addUser(cmd.PID, cmd.arg, dados->userList, dados->nUserOn, dados->playerList, dados->nPlayersOn) == 1)
+                        printf("Erro ao adicionar o utilizador\n");  //* PLACE_HOLDER
                 }
+
+                printf("%s Enviar nivel a %s [%d]\n", TAG_MOTOR, cmd.arg, cmd.PID);
+
+                char FIFO_USER[MAX];
+                sprintf(FIFO_USER, FIFO_JOGOUI, cmd.PID);
+
+                DataRecive data = {
+                    .dataType = DATA_LEVEL,
+                    .data.level = exportLevel(*(dados->level), dados->playerList, *(dados->nPlayersOn)),  // TODO: adicionar mais merdas
+                };
+
+                writeNamePipe(FIFO_USER, data);
             }
 
-            char FIFO_USER[MAX];
-            sprintf(FIFO_USER, FIFO_JOGOUI, cmd.PID);
+            else if (strcmp(cmd.cmd, CMD_DESCONNECT) == 0) {
+                printf("%s Pedido de desconexao de %s [%d]\n", TAG_MOTOR, cmd.arg, cmd.PID);
+                if (removeUser(cmd.PID, cmd.arg, dados->userList, dados->nUserOn, dados->playerList, dados->nPlayersOn) == 1)
+                    printf("Erro ao remover o utilizador\n");  //* PLACE_HOLDER
+            }
 
-            DataRecive data = {
-                .dataType = DATA_LEVEL,
-                .data.level = *dados->level,
-            };
+            // TODO: validar se é um jogador (caso contrario, ignorar o pedido)
+            else if (strcmp(cmd.cmd, CMD_MOVE) == 0) {
+                printf("%s Pedido de movimento de %s [%d]\n", TAG_MOTOR, cmd.arg, cmd.PID);
+            }
 
-            writeNamePipe(FIFO_USER, data);
+            else if (strcmp(cmd.cmd, CMD_MSG) == 0) {
+                printf("%s Pedido de mensagem de %s [%d]\n", TAG_MOTOR, cmd.arg, cmd.PID);
+            }
+
+            else if (strcmp(cmd.cmd, CMD_PLIST) == 0) {
+                printf("%s Pedido de lista de jogadores de %s [%d]\n", TAG_MOTOR, cmd.arg, cmd.PID);
+            }
         }
     }
 
@@ -109,6 +123,4 @@ void writeNamePipe(char FIFO_NAME[], DataRecive data) {
     }
 
     close(fd);
-
-    return;
 }

@@ -21,7 +21,6 @@ int endFlag = 0;
 void singalHandler(int sig, siginfo_t* info, void* context) {
     //  Ativa a endFlag para sair dos loops
     endFlag = 1;
-    printf("SIGNAL: %d\n", sig);
 }
 
 /**
@@ -31,7 +30,7 @@ void checkMotorOpen() {
     int fd;
     fd = open(FIFO_MOTOR, O_WRONLY);
     if (fd != -1) {
-        printf("\n%s O motor esta a correr\n", TAG_MOTOR);
+        printf("\n%s Ja existe um motor a ser executdo\n", TAG_MOTOR);
         exit(EXIT_FAILURE);
     }
     close(fd);
@@ -46,6 +45,7 @@ void configThreads(Motor* motor) {
         .level = &motor->level,
         .nUserOn = &motor->nUserOn,
         .userList = &motor->userList,
+        .nPlayersOn = &motor->nPlayersOn,
         .playerList = &motor->playerList,
     };
 
@@ -117,6 +117,7 @@ void configServer(Motor* motor) {
     motor->nBotOn = 0;
     motor->nRockOn = 0;
     motor->nMoveBlockOn = 0;
+    motor->nPlayersOn = 0;
 
     // Configuração da flag global para sair do programa
     endFlag = 0;

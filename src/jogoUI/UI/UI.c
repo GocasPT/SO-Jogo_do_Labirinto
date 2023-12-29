@@ -3,6 +3,8 @@
 #include <signal.h>
 #include <string.h>
 
+#include "../NamePipe/NamePipe.h"
+
 /**
  * Função que configura as janelas do ncurses
  * \param ui Ponteiro da estrutura que guarda as janelas
@@ -73,10 +75,29 @@ int validateCommand(UI* ui, char* input) {
         }
 
         else if (!strcmp(cmd, "exit")) {
+            CommandToServer cmd = {
+                .PID = getpid(),
+                .cmd = CMD_DESCONNECT,
+                .arg = ""  // TODO [??]: mandar username
+            };
+
+            wprintw(ui->notification, "PID: %d\n cmd: %s\n arg: %s\n", cmd.PID, cmd.cmd, cmd.arg);
+            wrefresh(ui->notification);
+
+            wprintw(ui->notification, "DEBUG 1\n");
+            wrefresh(ui->notification);
+
+            writeNamePipe(FIFO_MOTOR, cmd);
+            wrefresh(ui->notification);
+
+            wprintw(ui->notification, "DEBUG 2\n");
+            wrefresh(ui->notification);
+
+            sigqueue(getpid(), SIGINT, (const union sigval)NULL);
+
+            // TODO [?]: ainda fica aqui isto
             wprintw(ui->notification, "Comando exit\nPreciona 'Enter' para sair");
             wrefresh(ui->notification);
-            sigqueue(getpid(), SIGINT, (const union sigval)NULL);
-            // TODO: invocar 'writeNamePipe' com o comando 'exit' [notificar o motor que o jogador saiu]
             return 1;
         }
 
@@ -95,6 +116,9 @@ int validateCommand(UI* ui, char* input) {
 void readInput(UI* ui, Level* level) {
     char input[MAX];  // String que guarda o input do utilizador
     int key, exit;    // Variavel que guarda a tecla de movimento do utilizador
+    CommandToServer cmd = {
+        .PID = getpid(),
+        .cmd = CMD_MOVE};
 
     // TODO [?]: sair do logo ou fazer o processo encerrar
     exit = 0;  // exit = false
@@ -105,15 +129,23 @@ void readInput(UI* ui, Level* level) {
         switch (key) {
             case KEY_UP:
                 wprintw(ui->notification, "Cima\n");
+                strcpy(cmd.arg, ARG_UP);
+                writeNamePipe(FIFO_MOTOR, cmd);
                 break;
             case KEY_DOWN:
                 wprintw(ui->notification, "Baixo\n");
+                strcpy(cmd.arg, ARG_DOWN);
+                writeNamePipe(FIFO_MOTOR, cmd);
                 break;
             case KEY_LEFT:
                 wprintw(ui->notification, "Esquerda\n");
+                strcpy(cmd.arg, ARG_LEFT);
+                writeNamePipe(FIFO_MOTOR, cmd);
                 break;
             case KEY_RIGHT:
                 wprintw(ui->notification, "Direita\n");
+                strcpy(cmd.arg, ARG_RIGHT);
+                writeNamePipe(FIFO_MOTOR, cmd);
                 break;
 
             // Se a tecla for SPACE, entra no modo de comando

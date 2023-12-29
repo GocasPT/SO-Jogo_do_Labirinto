@@ -3,9 +3,9 @@
 
 #include "../motor.h"
 
-int validateUser(char* username, Player* list, int listSize);
-int addUser(int PID, char* username, User* list, int* listSize);
-int removeUser(int PID, char* username, User* list, int* listSize);
+int validateUser(char* username, User* list, int listSize);
+int addUser(int PID, char* username, User* list, int* listSize, Player* playerList, int* playerListSize);
+int removeUser(int PID, char* username, User* list, int* listSize, Player* playerList, int* playerListSize);
 int addPlayer(char* username, Player* list, int* listSize);
 int removePlayer(char* username, Player* list, int* listSize);
 
