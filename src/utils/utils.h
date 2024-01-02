@@ -45,6 +45,7 @@ typedef struct {
 // Estrutura de dados do feedback do motor
 // TODO: ver o que se pode user aqui (respotas do motor)
 typedef struct {
+    char feedback[MAX];    // Feedback do motor
     int numPlayers;        // Numero de jogadores
     char players[5][MAX];  // Lista de jogadores
     User user;             // Dados do jogador que o jogoUI pediu

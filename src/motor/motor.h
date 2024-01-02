@@ -64,6 +64,8 @@ typedef struct {
     ThreadData_ReadPipe threadReadPipeData;  // Dados da thread de leitura do name pipe
     pthread_t threadReadBots;                // Thread de leitura dos bots
     pthread_t threadTick;                    // Thread que gera o tick do jogo
+
+    int* endFlag;
 } Motor;
 
 #endif  // MOTOR_H

@@ -1,8 +1,15 @@
 #include "MapManager.h"
 
 #include <fcntl.h>
+#include <pthread.h>
+#include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <wait.h>
 
 // TODO [Meta 2]: Receber o nivel para saber qual ficheiro ler (em ves de level1.txt)
 int readLevelMap(char* path, char board[ROWS][COLLUMN]) {
@@ -62,122 +69,120 @@ Level exportLevel(Level level, Player* playerList, int playerListSize /*, Rock* 
  * Executa o bot
  * \param motor Ponteiro da estrutura que guarda o servidor
  */
-int execBot(Motor* motor) {
-    printf("Executando bot\n\n");
+void execBot(int nBots, int fd[][2], int* botList) {
+    printf("\n%s A executar %d bots\n", TAG_MOTOR, nBots);
 
-    // TODO: 1 pipe → array de pipes (dinamico?)
-    int pid;    // PID do processo filho
-    int fd[2];  // Pipe
+    int pid;  // PID do processo filho
 
-    /**
-     * Cria o pipe
-     * Se retornar -1, houve um erro ao criar o pipe
-     */
-    if (pipe(fd) == -1) {
-        printf("%s Erro ao criar o pipe\n", TAG_MOTOR);
-        return -1;
-    }
+    for (int i = 0; i < nBots; i++) {
+        if (pipe(fd[i]) == -1) {
+            printf("\n%s Erro ao criar o pipe anonimos\n", TAG_MOTOR);
+            sigqueue(getpid(), SIGINT, (const union sigval)NULL);
+        }
 
-    printf("%s A executar os bots\n", TAG_MOTOR);
+        botList[i] = fork();  // Cria o processo filho
+        pid = botList[i];     // Guarda o PID do processo filho
 
-    /**
-     * Cria os processos filhos
-     * O número de processos filhos é igual ao nível + 1
-     * Nível 1 → 2 bots
-     * Nível 2 → 3 bots
-     * Nível 3 → 4 bots
-     */
-    // for (int i = 0; i < motor->level.level +1; i++) {
-    for (int i = 0; i < 1; i++) {
-        motor->botList[motor->nBotOn] = fork();  // Cria o processo filho
-        pid = motor->botList[motor->nBotOn];     // Guarda o PID do processo filho
-
-        // Erro ao criar o processo filho
+        // Erro
         if (pid < 0) {
-            printf("%s Erro ao criar o processo filho\n", TAG_MOTOR);
-            return -1;
+            printf("\n%s Erro ao criar o processo filho\n", TAG_MOTOR);
+            sigqueue(getpid(), SIGINT, (const union sigval)NULL);
+            return;
         }
 
         // Filho
         else if (pid == 0) {
             close(1);  // Fecha o stdout
 
-            /**
-             * Redireciona o stdout para o pipe
-             * Se retornar -1, houve um erro ao redirecionar o stdout
-             */
-            if (dup(fd[1]) == -1) {
-                fprintf(stderr, "%s Erro ao redirecionar o stdout\n", TAG_MOTOR);
-                return -1;
+            // stdout → pipe anonimo (escrita)
+            if (dup(fd[i][1]) == -1) {
+                fprintf(stderr, "\n%s Erro ao redirecionar o stdout\n", TAG_MOTOR);
+                sigqueue(getpid(), SIGINT, (const union sigval)NULL);
+                return;
             }
 
-            // Fecha o pipe
-            close(fd[0]);
-            close(fd[1]);
+            close(fd[i][0]);  // Fecha o stdin
+            close(fd[i][1]);  // Fecha o pipe anonimo (escrita)
 
-            /**
-             * Define os valores do intervalo e duração (depende do número de bots)
-             * O intervalo é de 30 a 10 segundos
-             * A duração é de 10 a 0 segundos
-             */
             char interval[3], duration[3];
-            sprintf(interval, "%d", 30 - motor->nBotOn * 5);
-            sprintf(duration, "%d", 10 - motor->nBotOn * 5);
+            sprintf(interval, "%d", 30 - i * 5);
+            sprintf(duration, "%d", 10 - i * 5);
 
-            /**
-             * Executa o bot
-             * Se retornar -1, houve um erro ao executar o bot
-             */
-            if (execl("./bot/bot", "./bot/bot", interval, duration, NULL) == -1) {
-                fprintf(stderr, "%s [FILHO] Erro ao executar o bot\n", TAG_MOTOR);
+            if (execl("./bot", "./bot", interval, duration, NULL) == -1) {
+                fprintf(stderr, "\n%s [FILHO] Erro ao executar o bot\n", TAG_MOTOR);
 
-                // Fecha o pipe
-                close(fd[0]);
-                close(fd[1]);
-                motor->nBotOn--;  // Decrementa o número de bots
-                return -1;
+                close(fd[i][0]);
+                close(fd[i][1]);
+                exit(-1);
+            }
+
+            // Pai
+        } else {
+            close(fd[i][1]);
+        }
+    }
+}
+
+void* readBots(void* arg) {
+    Motor* motor = (Motor*)arg;
+    int fd[MAX_BOT + 1][2];
+    int result;
+
+    // TODO: endflag
+    while (*(motor->endFlag) != 1) {
+        int nBots = motor->level.level + 1;
+
+        execBot(nBots, fd, motor->botList);
+        motor->nBotOn = nBots;
+
+        fd_set readFds;
+        FD_ZERO(&readFds);
+
+        for (int i = 0; i < nBots; i++)
+            FD_SET(fd[i][0], &readFds);
+
+        // TODO: change level
+        while (motor->timerGame > 0 && *(motor->endFlag) != 1) {
+            result = select(fd[nBots - 1][0] + 1, &readFds, NULL, NULL, NULL);
+            if (result == -1) {
+                printf("\n%s Erro ao executar o select\n", TAG_MOTOR);
+                sigqueue(getpid(), SIGINT, (const union sigval)NULL);
+                continue;
+                ;
+            } else if (result == 0)
+                continue;
+            else {
+                for (int i = 0; i < nBots; i++)
+                    if (FD_ISSET(fd[i][0], &readFds)) {
+                        char buffer[MAX];
+                        int nBytes = read(fd[i][0], buffer, sizeof(buffer));
+                        if (nBytes == -1) {
+                            printf("\n%s Erro ao ler o pipe anonimo\n", TAG_MOTOR);
+                            sigqueue(getpid(), SIGINT, (const union sigval)NULL);
+                            continue;
+                        } else if (nBytes == 0)
+                            continue;
+                        else {
+                            printf("\n%s Bot: %s\n", TAG_MOTOR, buffer);
+                            // TODO: addRock();
+                        }
+                    }
             }
         }
 
-        // Pai
-        else
-            // Incrementa o número de bots
-            motor->nBotOn++;
-    }
-
-    // Fecha o pipe
-    close(fd[1]);
-
-    // String que guarda o input do pipe
-    char buffer[10];
-
-    // Mostra as informações dos bots
-    showInfo(*motor, 'b');
-    printf("%s A ler o pipe:\n", TAG_MOTOR);
-
-    // Loop infinito para ler o pipe
-    // TODO: thread + select
-    while (1) {
-        /**
-         * Lê o pipe
-         * Se retornar -1, houve um erro ao ler o pipe
-         */
-        if (read(fd[0], buffer, sizeof(buffer)) == -1) {
-            printf("\n%s Erro ao ler o pipe\n", TAG_MOTOR);
-            return 1;
+        printf("\n%s A terminar os bots\n", TAG_MOTOR);
+        for (int i = 0; i < nBots; i++) {
+            printf("Bot: %d [PID - %d]\n", i + 1, motor->botList[i]);
+            close(fd[i][0]);
+            close(fd[i][1]);
+            sigqueue(motor->botList[i], SIGINT, (const union sigval)NULL);
+            waitpid(motor->botList[i], NULL, 0);
         }
-
-        // Posiciona o \0 no final da string
-        buffer[strlen(buffer) - 1] = '\0';
-
-        // Define os valores do x, y e duração lidos do pipe (buffer)
-        int x, y, duration;
-        sscanf(buffer, "%d %d %d", &x, &y, &duration);
-
-        printf("%s RECEBI: %d %d %d\n", TAG_MOTOR, x, y, duration);
+        nBots = 0;
+        motor->nBotOn = nBots;
     }
 
-    return 0;
+    pthread_exit(NULL);
 }
 
 // TODO: docs
@@ -206,4 +211,16 @@ void movePlayer(char board[ROWS][COLLUMN], Player* player, char* direction) {
     }
 
     printf("%s %s moveu-se para %d %d\n", TAG_MOTOR, player->username, player->x, player->y);
+}
+
+void addRock(Rock* list, int* listSize, int x, int y, int time) {
+    // TODO: validar coor
+    Rock newRock = {
+        .x = x,
+        .y = y,
+        .time = time,
+    };
+
+    list[*listSize] = newRock;
+    (*listSize)++;
 }

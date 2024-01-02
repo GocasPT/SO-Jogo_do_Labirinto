@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "../UserManager/UserManager.h"
+
 // TODO: docs
 void readConsola(Motor* motor, int* endFlag) {
     char input[MAX];  // String que guarda o input do utilizador
@@ -49,10 +51,25 @@ int validateCommand(char* input, Motor* motor) {
             showInfo(*motor, 'u');
         }
 
-        else if (!strcmp(cmd, "kick")) {
-            if (argc != 2)  // Verifica se o numero de argumentos é valido
+        else if (!strcmp(cmd, "kick")) {  // Verifica se o numero de argumentos é valido
+            if (argc != 2) {
                 printf("%s Comando kick invalido - Falta de arugmentos\n", TAG_MOTOR);
-            else
+
+                /*User* user = getUserByName(argv[0], motor->userList, motor->nUserOn);
+
+                char FIFO_FINAL[MAX];
+                sprintf(FIFO_FINAL, FIFO_JOGOUI, user->PID);
+
+                DataRecive data = {
+                    .dataType = DATA_FEEDBACK,
+                    .data.feedBack = {
+                        .feedback = CMD_DESCONNECT,
+                    },
+                };
+
+                writeNamePipe(FIFO_FINAL, data);
+                removeUser(user->PID, user->username, motor->userList, motor->nUserOn, motor->playerList, motor->nPlayersOn);*/
+            } else
                 printf("%s Comando msg\nUser: %s\n", TAG_MOTOR, argv[0]);
         }
 
@@ -78,19 +95,6 @@ int validateCommand(char* input, Motor* motor) {
             printf("%s Comando end\n", TAG_MOTOR);
             sigqueue(getpid(), SIGINT, (const union sigval)NULL);
             return -1;
-        }
-
-        //* PLACEHOLDER [META 1]
-        else if (!strcmp(cmd, "test_bot")) {
-            printf("%s Comando test_bot\n", TAG_MOTOR);
-            /**
-             * Executa o bot
-             * Se retornar -1, houve um erro ao executar o bot
-             */
-            if (execBot(motor) == -1) {
-                printf("%s Erro ao executar o bot\n", TAG_MOTOR);
-                return -1;
-            }
         }
 
         else

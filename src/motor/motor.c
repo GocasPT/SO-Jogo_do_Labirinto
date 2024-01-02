@@ -15,7 +15,7 @@
 #include "NamePipe/NamePipe.h"
 
 // TODO: docs
-int endFlag = 0;
+int endFlag;
 
 // TODO: docs
 void singalHandler(int sig, siginfo_t* info, void* context) {
@@ -58,12 +58,12 @@ void configThreads(Motor* motor) {
         printf("Thread \'readNamePipe\' criada\n");
 
     // TODO: crias função/thread para a leitura dos bots + argumento
-    /*resutl = pthread_create(&motor->threadReadBots, NULL, readBots, NULL);
+    resutl = pthread_create(&motor->threadReadBots, NULL, readBots, motor);
     if (resutl != 0) {
         printf("Erro ao criar a thread de leitura dos bots\n");
-        return -1;
+        exit(EXIT_FAILURE);
     } else
-        printf("%s Thread'readBots' criada\n" TAG_MOTOR);*/
+        printf("%s Thread'readBots' criada\n" TAG_MOTOR);
 
     // TODO: crias função/thread para os ticks + argumento
     /*resutl = pthread_create(&motor->threadTick, NULL, NULL, NULL);
@@ -118,6 +118,7 @@ void configServer(Motor* motor) {
     motor->nRockOn = 0;
     motor->nMoveBlockOn = 0;
     motor->nPlayersOn = 0;
+    motor->endFlag = &endFlag;
 
     // Configuração da flag global para sair do programa
     endFlag = 0;
@@ -146,15 +147,15 @@ void closeServer(Motor* motor) {
     // TODO: fechar programa (esperar thread e fazer limpeza das cenas)
     printf("%s A sair do programa...\n", TAG_MOTOR);
 
-    for (int i = 0; i < motor->nBotOn; i++) {
+    /*for (int i = 0; i < motor->nBotOn; i++) {
         printf("Bot: %d [PID - %d]\n", i + 1, motor->botList[i]);
         sigqueue(motor->botList[i], SIGINT, (const union sigval)NULL);
         waitpid(motor->botList[i], NULL, 0);
-    }
+    }*/
 
     // TODO: docs
     pthread_join(motor->threadReadPipe, NULL);
-    // pthread_join(motor->threadReadBots, NULL);
+    pthread_join(motor->threadReadBots, NULL);
     // pthread_join(motor->threadTick, NULL);
 
     unlink(FIFO_MOTOR);
@@ -168,6 +169,8 @@ int main() {
 
     //  Configura o servidor
     configServer(&servidor);
+
+    sleep(1);
 
     // TODO: docs
     readConsola(&servidor, &endFlag);
