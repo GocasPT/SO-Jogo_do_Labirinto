@@ -10,5 +10,6 @@ int addPlayer(char* username, Player* list, int* listSize);
 int removePlayer(char* username, Player* list, int* listSize);
 Player* getPlayer(Player* list, int listSize, char* username);
 User* getUser(User* list, int listSize, int PID);
+User* getUserByUsername(User* list, int listSize, char* username);
 
 #endif  // USERMANAGER_H

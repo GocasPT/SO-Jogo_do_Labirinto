@@ -52,10 +52,17 @@ int validateCommand(char* input, Motor* motor) {
         }
 
         else if (!strcmp(cmd, "kick")) {  // Verifica se o numero de argumentos é valido
-            if (argc != 2) {
+            if (argc != 2)
                 printf("%s Comando kick invalido - Falta de arugmentos\n", TAG_MOTOR);
+            else {
+                printf("%s Comando kick\nUser: %s\n", TAG_MOTOR, argv[0]);
 
-                /*User* user = getUserByName(argv[0], motor->userList, motor->nUserOn);
+                User* user = getUser(motor->userList, motor->nUserOn, argv[0]);
+
+                if (user == NULL) {
+                    printf("\n%s Utilizador nao encontrado\n", TAG_MOTOR);
+                    return 0;
+                }
 
                 char FIFO_FINAL[MAX];
                 sprintf(FIFO_FINAL, FIFO_JOGOUI, user->PID);
@@ -63,14 +70,13 @@ int validateCommand(char* input, Motor* motor) {
                 DataRecive data = {
                     .dataType = DATA_FEEDBACK,
                     .data.feedBack = {
-                        .feedback = CMD_DESCONNECT,
+                        .feedback = FEEDBACK_CLOSE,
                     },
                 };
 
                 writeNamePipe(FIFO_FINAL, data);
-                removeUser(user->PID, user->username, motor->userList, motor->nUserOn, motor->playerList, motor->nPlayersOn);*/
-            } else
-                printf("%s Comando msg\nUser: %s\n", TAG_MOTOR, argv[0]);
+                removeUser(user->PID, user->username, motor->userList, motor->nUserOn, motor->playerList, motor->nPlayersOn);
+            }
         }
 
         else if (!strcmp(cmd, "bots")) {

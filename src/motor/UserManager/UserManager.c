@@ -101,3 +101,13 @@ User* getUser(User* list, int listSize, int PID) {
 
     return NULL;
 }
+
+// TODO: docs
+User* getUserByUsername(User* list, int listSize, char* username) {
+    for (int i = 0; i < listSize; i++) {
+        if (strcmp(list[i].username, username) == 0)
+            return &list[i];
+    }
+
+    return NULL;
+}
