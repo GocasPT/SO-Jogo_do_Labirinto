@@ -47,7 +47,9 @@ int removeUser(int PID, char* username, User* list, int* listSize, Player* playe
         }
     }
 
-    removePlayer(username, playerList, playerListSize);
+    Player* player = getPlayer(playerList, *playerListSize, username);
+    if (player != NULL)
+        removePlayer(username, playerList, playerListSize);
 
     return 1;
 }

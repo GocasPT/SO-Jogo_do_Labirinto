@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "../NamePipe/NamePipe.h"
 #include "../UserManager/UserManager.h"
 
 // TODO: docs
@@ -57,7 +58,7 @@ int validateCommand(char* input, Motor* motor) {
             else {
                 printf("%s Comando kick\nUser: %s\n", TAG_MOTOR, argv[0]);
 
-                User* user = getUser(motor->userList, motor->nUserOn, argv[0]);
+                User* user = getUserByUsername(motor->userList, motor->nUserOn, argv[0]);
 
                 if (user == NULL) {
                     printf("\n%s Utilizador nao encontrado\n", TAG_MOTOR);

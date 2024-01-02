@@ -148,8 +148,6 @@ void writeNamePipe(char FIFO_NAME[], DataRecive data) {
         printf("Erro ao escrever no FIFO do servidor\n");
     } else if (nBytes == 0) {
         printf("Erro ao escrever no FIFO do servidor (nBytes a 0)\n");
-    } else {
-        printf("Escrito %d bytes no FIFO do servidor\n", nBytes);  // TODO: remover
     }
 
     close(fd);

@@ -97,13 +97,7 @@ int validateCommand(UI* ui, char* input) {
             wprintw(ui->notification, "PID: %d\n cmd: %s\n arg: %s\n", cmd.PID, cmd.cmd, cmd.arg);
             wrefresh(ui->notification);
 
-            wprintw(ui->notification, "DEBUG 1\n");
-            wrefresh(ui->notification);
-
             writeMotor(ui, cmd);
-            wrefresh(ui->notification);
-
-            wprintw(ui->notification, "DEBUG 2\n");
             wrefresh(ui->notification);
 
             sigqueue(getpid(), SIGINT, (const union sigval)NULL);

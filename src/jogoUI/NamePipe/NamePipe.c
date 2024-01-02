@@ -2,10 +2,12 @@
 
 #include <fcntl.h>
 #include <pthread.h>
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include "../jogoUI.h"
 
@@ -59,6 +61,8 @@ void* readNamePipe(void* lpram) {
 
             else if (dataRecive.dataType == DATA_FEEDBACK) {
                 // TODO: logica
+                if (dataRecive.data.feedBack.feedback == FEEDBACK_CLOSE)
+                    sigqueue(getpid(), SIGINT, (const union sigval)NULL);
             }
 
             else if (dataRecive.dataType == DATA_MSG) {
