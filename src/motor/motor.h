@@ -16,6 +16,7 @@
 // Estrutura de dados do jogador
 typedef struct {
     char username[MAX];  // Nome do jogador
+    char sprite;         // Sprite do jogador
     int x, y;            // Posição
 } Player;
 

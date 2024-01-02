@@ -37,11 +37,19 @@ void configUI(UI* ui) {
  * \param board Matriz que guarda o labirinto
  */
 void drawMaze(UI* ui, char board[ROWS][COLLUMN]) {
+    // wclear(ui->maze);     // Limpa a janela do tabuleiro
+    box(ui->maze, 0, 0);  // Desenha a borda da janela
+
     // Percorre as linhas to tabuleiro e imprime elas
     for (int i = 0; i < ROWS; i++)
-        mvwprintw(ui->maze, i + 1, 1, "%s", board[i]);
+        for (int j = 0; j < COLLUMN; j++)
+            mvwprintw(ui->maze, i + 1, j + 1, "%c", board[i][j]);
+    // mvwprintw(ui->maze, i + 1, 1, "%s", board[i]);
 
     wrefresh(ui->maze);  // Atualiza a janela
+
+    mvwprintw(ui->info, 1, 1, "Nivel: %d\n", 1);  // TODO: mudar para o nivel atual
+    wrefresh(ui->info);                           // Atualiza a janela
 }
 
 /**
@@ -62,7 +70,12 @@ int validateCommand(UI* ui, char* input) {
 
         else if (!strcmp(cmd, "players")) {
             wprintw(ui->notification, "Comando players\n");
-            // TODO: invocar 'writeNamePipe' com o comando 'plist'
+            CommandToServer cmd = {
+                .PID = getpid(),
+                .cmd = CMD_PLIST,
+                .arg = "",
+            };
+            writeMotor(ui, cmd);
         }
 
         else if (!strcmp(cmd, "msg")) {
@@ -70,7 +83,7 @@ int validateCommand(UI* ui, char* input) {
                 wprintw(ui->notification, "Comando de msg invalido\n\tmsg <username> <mensagem>\n");
             else {
                 wprintw(ui->notification, "Comando msg\nDestinatario: %s\nMensagem: %s\n", argv[0], argv[1]);
-                // TODO: invocar 'writeNamePipe' com o comando 'msg'
+                writeMessage(ui, argv[0], argv[1]);
             }
         }
 
@@ -87,7 +100,7 @@ int validateCommand(UI* ui, char* input) {
             wprintw(ui->notification, "DEBUG 1\n");
             wrefresh(ui->notification);
 
-            writeNamePipe(FIFO_MOTOR, cmd);
+            writeMotor(ui, cmd);
             wrefresh(ui->notification);
 
             wprintw(ui->notification, "DEBUG 2\n");
@@ -113,39 +126,36 @@ int validateCommand(UI* ui, char* input) {
  * Função que lê o input do utilizador
  * \param jogoUI Ponteiro da estrutura princpal do jogoUI
  */
-void readInput(UI* ui, Level* level) {
+void readInput(UI* ui) {
     char input[MAX];  // String que guarda o input do utilizador
     int key, exit;    // Variavel que guarda a tecla de movimento do utilizador
     CommandToServer cmd = {
         .PID = getpid(),
-        .cmd = CMD_MOVE};
+        .cmd = CMD_MOVE,
+    };
 
     // TODO [?]: sair do logo ou fazer o processo encerrar
     exit = 0;  // exit = false
     while (exit != 1) {
-        drawMaze(ui, level->board);  // Desenha o labirinto
+        // drawMaze(ui, level->board);  // Desenha o labirinto
 
         key = wgetch(ui->maze);  // Espera por uma tecla de movimento
         switch (key) {
             case KEY_UP:
-                wprintw(ui->notification, "Cima\n");
                 strcpy(cmd.arg, ARG_UP);
-                writeNamePipe(FIFO_MOTOR, cmd);
+                writeMotor(ui, cmd);
                 break;
             case KEY_DOWN:
-                wprintw(ui->notification, "Baixo\n");
                 strcpy(cmd.arg, ARG_DOWN);
-                writeNamePipe(FIFO_MOTOR, cmd);
+                writeMotor(ui, cmd);
                 break;
             case KEY_LEFT:
-                wprintw(ui->notification, "Esquerda\n");
                 strcpy(cmd.arg, ARG_LEFT);
-                writeNamePipe(FIFO_MOTOR, cmd);
+                writeMotor(ui, cmd);
                 break;
             case KEY_RIGHT:
-                wprintw(ui->notification, "Direita\n");
                 strcpy(cmd.arg, ARG_RIGHT);
-                writeNamePipe(FIFO_MOTOR, cmd);
+                writeMotor(ui, cmd);
                 break;
 
             // Se a tecla for SPACE, entra no modo de comando

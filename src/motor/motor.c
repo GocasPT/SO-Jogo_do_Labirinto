@@ -44,9 +44,9 @@ void configThreads(Motor* motor) {
         .endThread = &endFlag,
         .level = &motor->level,
         .nUserOn = &motor->nUserOn,
-        .userList = &motor->userList,
+        .userList = motor->userList,
         .nPlayersOn = &motor->nPlayersOn,
-        .playerList = &motor->playerList,
+        .playerList = motor->playerList,
     };
 
     // TODO: argumento da thread (melhor uma srtuct dedica ou mandar o motor?)

@@ -8,5 +8,7 @@ int addUser(int PID, char* username, User* list, int* listSize, Player* playerLi
 int removeUser(int PID, char* username, User* list, int* listSize, Player* playerList, int* playerListSize);
 int addPlayer(char* username, Player* list, int* listSize);
 int removePlayer(char* username, Player* list, int* listSize);
+Player* getPlayer(Player* list, int listSize, char* username);
+User* getUser(User* list, int listSize, int PID);
 
 #endif  // USERMANAGER_H

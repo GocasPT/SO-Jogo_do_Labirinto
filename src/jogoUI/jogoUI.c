@@ -14,7 +14,7 @@
 int endFlag;  // TODO: docs
 
 // TODO: docs
-void signalHandler(int sig, siginfo_t* info, void* context) {
+void signalHandler() {
     endFlag = 1;
 }
 
@@ -81,7 +81,7 @@ int main(int argc, char* argv[]) {
 
     // Inicializa os name pipes
     sprintf(jogoUI.FIFO_NAME, FIFO_JOGOUI, getpid());
-    createNamePipe(jogoUI.FIFO_NAME);  // TODO: if
+    createNamePipe(&jogoUI.ui, jogoUI.FIFO_NAME);  // TODO: if
 
     // Inicializa a estrutura de dados para a thread de leitura
     ThreadData threadData;
@@ -96,14 +96,14 @@ int main(int argc, char* argv[]) {
 
     // Inicializa o level
     CommandToServer connectCmd = {
-        getpid(),
-        CMD_CONNECT,
-    };
+        .PID = getpid(),
+        .cmd = CMD_CONNECT,
+        .arg = ""};
     strcpy(connectCmd.arg, jogoUI.user.username);
-    writeNamePipe(FIFO_MOTOR, connectCmd);
+    writeMotor(&jogoUI.ui, connectCmd);
 
     // Loop principal do jogoUI
-    readInput(&jogoUI.ui, &jogoUI.level);
+    readInput(&jogoUI.ui);
 
     // TODO: docs
     endFlag = 1;

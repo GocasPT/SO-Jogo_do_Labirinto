@@ -27,7 +27,8 @@
 #define ARG_LEFT "left"    // TODO: docs
 #define ARG_RIGHT "right"  // TODO: docs
 
-#define FEEDBACK_CLOSE "close"  // TODO: docs
+#define FEEDBACK_CLOSE "close"      // TODO: docs
+#define FEEDBACK_INVALID "invalid"  // TODO: docs
 
 // Estruturas de dados do jogadore
 typedef struct {

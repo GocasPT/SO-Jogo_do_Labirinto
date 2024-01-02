@@ -1,5 +1,6 @@
 #include "UserManager.h"
 
+#include <stdio.h>
 #include <string.h>
 
 // TODO: docs
@@ -54,6 +55,7 @@ int removeUser(int PID, char* username, User* list, int* listSize, Player* playe
 // TODO: addPlayer
 // TODO: docs
 int addPlayer(char* username, Player* list, int* listSize) {
+    // TODO: coor random
     Player newPlayer = {
         .x = 1,
         .y = 1};
@@ -78,4 +80,24 @@ int removePlayer(char* username, Player* list, int* listSize) {
     }
 
     return 0;
+}
+
+// TODO: docs
+Player* getPlayer(Player* list, int listSize, char* username) {
+    for (int i = 0; i < listSize; i++) {
+        if (strcmp(list[i].username, username) == 0)
+            return &list[i];
+    }
+
+    return NULL;
+}
+
+// TODO: docs
+User* getUser(User* list, int listSize, int PID) {
+    for (int i = 0; i < listSize; i++) {
+        if (list[i].PID == PID)
+            return &list[i];
+    }
+
+    return NULL;
 }

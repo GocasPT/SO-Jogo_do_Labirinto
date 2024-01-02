@@ -9,12 +9,12 @@
 
 #include "../jogoUI.h"
 
-int createNamePipe(char FIFO_NAME[]) {
+int createNamePipe(UI* ui, char FIFO_NAME[]) {
     int result;
 
     result = mkfifo(FIFO_NAME, 0666);
     if (result == -1) {
-        printf("Erro ao criar o FIFO do jogador\n");
+        wprintw(ui->notification, "Erro ao criar o FIFO do jogador\n");
         return -1;
     }
 
@@ -52,11 +52,10 @@ void* readNamePipe(void* lpram) {
             continue;
         else {
             // TODO: tratamento de dados
-            wprintw(dados->ui->notification, "Recebi %d bytes\n", nBytes);
-            wrefresh(dados->ui->notification);
-
-            if (dataRecive.dataType == DATA_LEVEL)
-                drawMaze(dados->ui, dataRecive.data.level.board);
+            if (dataRecive.dataType == DATA_LEVEL) {
+                *(dados->level) = dataRecive.data.level;
+                drawMaze(dados->ui, dados->level->board);
+            }
 
             else if (dataRecive.dataType == DATA_FEEDBACK) {
                 // TODO: logica
@@ -74,32 +73,85 @@ void* readNamePipe(void* lpram) {
 }
 
 // TODO: docs
-void writeNamePipe(char FIFO_NAME[], CommandToServer cmd) {
+// TODO: fução para escrever para o motor
+void writeMotor(UI* ui, CommandToServer cmd) {
     int fd;
 
-    printf("\nDEBUG WRITE\n");
-
-    fd = open(FIFO_NAME, O_WRONLY);
+    fd = open(FIFO_MOTOR, O_WRONLY);
     // TODO: checkar erro
     if (fd == -1) {
-        printf("Erro ao abrir o FIFO do servidor\n");
+        wprintw(ui->notification, "Erro ao abrir o FIFO do servidor\n");
         return;
     }
-
-    printf("DEBUG TOU ABERTO\n");
 
     int nBytes;
 
     nBytes = write(fd, &cmd, sizeof(CommandToServer));
     if (nBytes == -1) {
-        printf("Erro ao escrever no FIFO do servidor\n");
-    } else if (nBytes == 0) {
-        printf("Erro ao escrever no FIFO do servidor (nBytes a 0)\n");
-    } else {
-        printf("Escrito %d bytes no FIFO do servidor\n", nBytes);
+        wprintw(ui->notification, "Erro ao escrever no FIFO do servidor\n");
     }
 
     close(fd);
 
     return;
+}
+
+void writeMessage(UI* ui, char* username, char* message) {
+    CommandToServer cmd = {
+        .PID = getpid(),
+        .cmd = CMD_MSG,
+    };
+
+    strcpy(cmd.arg, message);
+
+    writeMotor(ui, cmd);
+
+    int fd;
+    char FIFO_FINAL[MAX];
+    sprintf(FIFO_FINAL, FIFO_JOGOUI, getpid());
+
+    fd = open(FIFO_FINAL, O_RDONLY);
+    if (fd == -1) {
+        wprintw(ui->notification, "Erro ao abrir o FIFO do jogador\n");
+        return;
+    }
+
+    int nBytes;
+    DataRecive dataRecive;
+    int PID_user;
+    while (1) {
+        nBytes = read(fd, &dataRecive, sizeof(DataRecive));
+        if (nBytes == -1) {
+            wprintw(ui->notification, "Erro ao ler o FIFO do jogador\n");
+            return;
+        } else if (nBytes == 0)
+            continue;
+        else {
+            if (dataRecive.dataType == DATA_FEEDBACK) {
+                PID_user = dataRecive.data.feedBack.user.PID;
+                break;
+            }
+        }
+    }
+
+    close(fd);
+
+    sprintf(FIFO_FINAL, FIFO_JOGOUI, PID_user);
+    dataRecive.dataType = DATA_MSG;
+    MSG msg;
+    strcpy(msg.msg, message);
+    strcpy(msg.username, username);  // TODO: username do escrito, nao do destinatario
+    dataRecive.data.msg = msg;
+
+    fd = open(FIFO_FINAL, O_WRONLY);
+    if (fd == -1) {
+        wprintw(ui->notification, "Erro ao abrir o FIFO do jogador\n");
+        return;
+    }
+
+    nBytes = write(fd, &msg, sizeof(MSG));
+    if (nBytes == -1)
+        wprintw(ui->notification, "Erro ao enviar o FIFO ao jogador destinado\n");
+    else
+        wprintw(ui->notification, "Mensagem enviada a %s", username);
 }

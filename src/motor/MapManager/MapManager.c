@@ -5,11 +5,6 @@
 #include <string.h>
 
 // TODO [Meta 2]: Receber o nivel para saber qual ficheiro ler (em ves de level1.txt)
-/**
- * Lê o mapa do ficheiro e coloca no tabuleiro
- * \param path Caminho do ficheiro
- * \param board Tabuleiro
- */
 int readLevelMap(char* path, char board[ROWS][COLLUMN]) {
     // Abre o ficheiro
     FILE* file = fopen(path, "r");
@@ -20,15 +15,13 @@ int readLevelMap(char* path, char board[ROWS][COLLUMN]) {
         return -1;
     }
 
-    char endLine[2];  // Para ler o \n do final da linha
-
     // Lê o ficheiro linha a linha
     for (int i = 0; i < ROWS; i++) {
         /**
          * Lê uma linha do arquivo e coloca na board
          * Se retornar NULL, houve um erro ao ler o ficheiro
          */
-        if (fgets(board[i], COLLUMN, file) == NULL) {
+        if (fgets(board[i], COLLUMN + 1, file) == NULL) {
             printf("%s Erro ao ler o arquivo %s\n", TAG_MOTOR, path);
             return -1;
         }
@@ -37,9 +30,10 @@ int readLevelMap(char* path, char board[ROWS][COLLUMN]) {
          * Lê o \n do final da linha e descarta
          * Se retornar NULL, houve um erro ao ler o ficheiro
          */
-        if (fgets(endLine, 2, file) == NULL) {
-            printf("%s Erro ao ler o arquivo %s\n", TAG_MOTOR, path);
-            return -1;
+        // Replace the newline character with a null character
+        char* newline = strchr(board[i], '\n');
+        if (newline) {
+            *newline = '\0';
         }
     }
 
@@ -59,11 +53,7 @@ Level exportLevel(Level level, Player* playerList, int playerListSize /*, Rock* 
     Level exportLevel = level;
 
     for (int i = 0; i < playerListSize; i++)
-        exportLevel.board[playerList[i].x][playerList[i].y] = 'P';
-
-    printf("Mapa:\n");
-    for (int i = 0; i < ROWS; i++)
-        printf("%s\n", exportLevel.board[i]);
+        exportLevel.board[playerList[i].y][playerList[i].x] = 'P';
 
     return exportLevel;
 }
@@ -191,39 +181,29 @@ int execBot(Motor* motor) {
 }
 
 // TODO: docs
-void movePlayer(char board[ROWS][COLLUMN], Player* list, int listSize, char* username, char direction) {
-    Player* player;
-
-    for (int i = 0; i < listSize; i++) {
-        if (strcmp(list[i].username, username) == 0) {
-            player = &list[i];
-            break;
-        }
-    }
-
-    if (player == NULL)
-        return;
-
+void movePlayer(char board[ROWS][COLLUMN], Player* player, char* direction) {
     int x = player->x;
     int y = player->y;
 
-    if (strcmp(direction, ARG_DOWN)) {
-        if (board[x + 1][y] == ' ')
-            player->x++;
+    if (strcmp(direction, ARG_DOWN) == 0) {
+        if (board[y + 1][x] == ' ')
+            player->y++;
     }
 
-    else if (strcmp(direction, ARG_UP)) {
-        if (board[x - 1][y] == ' ')
-            player->x--;
-    }
-
-    else if (strcmp(direction, ARG_LEFT)) {
-        if (board[x][y - 1] == ' ')
+    else if (strcmp(direction, ARG_UP) == 0) {
+        if (board[y - 1][x] == ' ')
             player->y--;
     }
 
-    else if (strcmp(direction, ARG_RIGHT)) {
-        if (board[x][y + 1] == ' ')
-            player->y++;
+    else if (strcmp(direction, ARG_LEFT) == 0) {
+        if (board[y][x - 1] == ' ')
+            player->x--;
     }
+
+    else if (strcmp(direction, ARG_RIGHT) == 0) {
+        if (board[y][x + 1] == ' ')
+            player->x++;
+    }
+
+    printf("%s %s moveu-se para %d %d\n", TAG_MOTOR, player->username, player->x, player->y);
 }

@@ -84,10 +84,40 @@ void* readNamePipe(void* lpram) {
             // TODO: validar se é um jogador (caso contrario, ignorar o pedido)
             else if (strcmp(cmd.cmd, CMD_MOVE) == 0) {
                 printf("%s Pedido de movimento de %s [%d]\n", TAG_MOTOR, cmd.arg, cmd.PID);
+                User* user = getUser(dados->userList, *(dados->nUserOn), cmd.PID);
+                Player* player = getPlayer(dados->playerList, *(dados->nPlayersOn), user->username);
+
+                if (player == NULL)
+                    continue;
+
+                movePlayer(dados->level, player, cmd.arg);
+
+                char FIFO_USER[MAX];
+                sprintf(FIFO_USER, FIFO_JOGOUI, cmd.PID);
+
+                DataRecive data = {
+                    .dataType = DATA_LEVEL,
+                    .data.level = exportLevel(*(dados->level), dados->playerList, *(dados->nPlayersOn)),  // TODO: adicionar mais merdas
+                };
+
+                writeNamePipe(FIFO_USER, data);
             }
 
             else if (strcmp(cmd.cmd, CMD_MSG) == 0) {
                 printf("%s Pedido de mensagem de %s [%d]\n", TAG_MOTOR, cmd.arg, cmd.PID);
+                /*User* user = getUser(dados->userList, *(dados->nUserOn), cmd.PID);
+
+                char FIFO_USER[MAX];
+                sprintf(FIFO_USER, FIFO_JOGOUI, cmd.PID);
+
+                DataRecive data = {
+                    .dataType = DATA_FEEDBACK,
+                    .data.feedBack = {
+                        .user =
+                    }
+                };
+
+                writeNamePipe(FIFO_USER, data);*/
             }
 
             else if (strcmp(cmd.cmd, CMD_PLIST) == 0) {
@@ -119,7 +149,7 @@ void writeNamePipe(char FIFO_NAME[], DataRecive data) {
     } else if (nBytes == 0) {
         printf("Erro ao escrever no FIFO do servidor (nBytes a 0)\n");
     } else {
-        printf("Escrito %d bytes no FIFO do servidor\n", nBytes);
+        printf("Escrito %d bytes no FIFO do servidor\n", nBytes);  // TODO: remover
     }
 
     close(fd);

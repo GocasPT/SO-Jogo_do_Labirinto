@@ -37,6 +37,6 @@ typedef struct {
 void configUI(UI* ui);
 void drawMaze(UI* ui, char board[ROWS][COLLUMN]);
 int validateCommand(UI* ui, char* input);
-void readInput(UI* ui, Level* level);
+void readInput(UI* ui);
 
 #endif  // UI_H

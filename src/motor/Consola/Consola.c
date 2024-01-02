@@ -137,8 +137,9 @@ void showInfo(Motor motor, char type) {
 
         //  Nível
         case 'l':
-            printf("Level: %d\n", motor.level.level);
-            // TODO: mostrar mapa
+            printf("Level: %d\nMapa:\n", motor.level.level);
+            for (int i = 0; i < ROWS; i++)
+                printf("%s\n", motor.level.board[i]);
             break;
 
         // Tempo
