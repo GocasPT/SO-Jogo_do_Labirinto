@@ -5,6 +5,11 @@ Trabalho prático feita por:
 - Guilherme Camacho
 - Maria Reis
 
-Nota: 
+Nota: 44%
 - Meta 1: 100%
-- Meta 2: 
+- Meta 2: 44%
+
+Funções em falta:
+- Jogo base
+- Thread temporizador
+- Comunicação a 100%
